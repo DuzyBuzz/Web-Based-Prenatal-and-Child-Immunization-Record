@@ -4,6 +4,8 @@ import { LeftSidePanelComponent } from './left-side-panel/left-side-panel.compon
 import { RightSidePanelComponent } from './right-side-panel/right-side-panel.component';
 import { FooterComponent } from './footer/footer.component';
 import { RouterModule } from '@angular/router';
+import { HttpClientModule } from '@angular/common/http';
+
 
 @NgModule({
   declarations: [
@@ -11,7 +13,7 @@ import { RouterModule } from '@angular/router';
     FooterComponent,
     LeftSidePanelComponent,
   ],
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, HttpClientModule],
   exports: [
     RightSidePanelComponent,
     FooterComponent,

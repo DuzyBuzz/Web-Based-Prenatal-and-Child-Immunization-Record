@@ -9,5 +9,5 @@ import { PagesModule } from "./pages/pages.module";
   styleUrl: './app.component.scss'
 })
 export class AppComponent {
-  title = 'ums';
+  title = 'Prenatal and Child Immunization Records App';
 }

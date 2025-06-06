@@ -34,3 +34,13 @@
 .btn-green {
   @apply bg-green-500 text-white font-medium px-6 py-2 rounded-xl hover:bg-green-600 transition;
 }
+  body {
+    background: white !important;
+  }
+  .print-a4 {
+    width: 210mm !important;
+    min-height: 297mm !important;
+    box-shadow: none !important;
+    margin: 0 auto !important;
+    border: none !important;
+  }

@@ -1,0 +1,130 @@
+<div class="p-4 bg-white shadow-md rounded-lg mx-auto" style="width: 210mm; min-height: 297mm;">
+  <!-- Header -->
+  <div class="text-center font-bold text-lg mb-4">
+    INDIVIDUAL TREATMENT RECORD FOR IMMUNIZATION AND SICK CHILDREN
+  </div>
+
+  <!-- Personal Info Section -->
+  <div class="grid grid-cols-3 gap-2 text-xs mb-4">
+    <div class="flex flex-col">
+      <label for="name" class="mb-1 text-gray-700">Name</label>
+      <input id="name" name="name" type="text" class="border p-1" />
+    </div>
+    <div class="flex flex-col">
+      <label for="age" class="mb-1 text-gray-700">Age</label>
+      <input id="age" name="age" type="text" class="border p-1" />
+    </div>
+    <div class="flex flex-col">
+      <label for="birthday" class="mb-1 text-gray-700">Birthday</label>
+      <input id="birthday" name="birthday" type="text" class="border p-1" />
+    </div>
+    <div class="flex flex-col">
+      <label for="address" class="mb-1 text-gray-700">Address</label>
+      <input id="address" name="address" type="text" class="border p-1" />
+    </div>
+    <div class="flex flex-col">
+      <label for="bhw" class="mb-1 text-gray-700">BHW</label>
+      <input id="bhw" name="bhw" type="text" class="border p-1" />
+    </div>
+    <div class="flex flex-col">
+      <label for="philhealth" class="mb-1 text-gray-700">PhilHealth No.</label>
+      <input id="philhealth" name="philhealth" type="text" class="border p-1" />
+    </div>
+    <div class="flex flex-col">
+      <label for="contact" class="mb-1 text-gray-700">Contact No.</label>
+      <input id="contact" name="contact" type="text" class="border p-1" />
+    </div>
+    <div class="flex flex-col">
+      <label for="mother" class="mb-1 text-gray-700">Mother's Name</label>
+      <input id="mother" name="mother" type="text" class="border p-1" />
+    </div>
+    <div class="flex flex-col">
+      <label for="placeofdelivery" class="mb-1 text-gray-700">Place of Delivery</label>
+      <input id="placeofdelivery" name="placeofdelivery" type="text" class="border p-1" />
+    </div>
+    <div class="flex flex-col">
+      <label for="weight" class="mb-1 text-gray-700">Weight</label>
+      <input id="weight" name="weight" type="text" class="border p-1" />
+    </div>
+    <div class="flex flex-col">
+      <label for="height" class="mb-1 text-gray-700">Height</label>
+      <input id="height" name="height" type="text" class="border p-1" />
+    </div>
+  </div>
+
+<!-- Immunization Table -->
+<div class="border border-gray-700 text-xs">
+  <div *ngFor="let vaccine of vaccines" class="grid grid-cols-4 border-t border-black">
+    <!-- Vaccine Name and Schedule -->
+    <div class="border border-black p-2 font-semibold text-center">
+      {{ vaccine.name }}<br />
+      <span class="font-normal">{{ vaccine.schedule }}</span>
+    </div>
+
+    <!-- Generate Slot Inputs -->
+    <div
+      *ngFor="let slot of [].constructor(vaccine.slots); let i = index"
+      class="border border-black p-2 flex flex-col gap-1"
+    >
+      <div class="flex flex-col">
+        <label [for]="vaccine.id + '-date-' + (i + 1)" class="mb-1 text-gray-700">Date</label>
+        <input
+          [id]="vaccine.id + '-date-' + (i + 1)"
+          [name]="vaccine.id + '-date-' + (i + 1)"
+          type="text"
+          class="border px-1 py-0.5"
+        />
+      </div>
+      <div class="flex flex-col">
+        <label [for]="vaccine.id + '-sig-' + (i + 1)" class="mb-1 text-gray-700">Sig</label>
+        <input
+          [id]="vaccine.id + '-sig-' + (i + 1)"
+          [name]="vaccine.id + '-sig-' + (i + 1)"
+          type="text"
+          class="border px-1 py-0.5"
+        />
+      </div>
+      <div class="flex flex-col">
+        <label [for]="vaccine.id + '-remarks-' + (i + 1)" class="mb-1 text-gray-700">Remarks</label>
+        <textarea
+          [id]="vaccine.id + '-remarks-' + (i + 1)"
+          [name]="vaccine.id + '-remarks-' + (i + 1)"
+          class="border px-1 py-0.5"
+        ></textarea>
+      </div>
+    </div>
+
+    <!-- Fill empty cell if less than 3 columns -->
+    <div
+      *ngIf="vaccine.slots < 3"
+      [attr.colspan]="3 - vaccine.slots"
+      class="border border-black p-2"
+    ></div>
+  </div>
+</div>
+
+  <!-- Submit Button -->
+  <div class="flex justify-end mt-8">
+    <button
+      type="submit"
+      class="bg-blue-600 text-white px-6 py-2 rounded shadow hover:bg-blue-700 transition"
+    >
+      Submit
+    </button>
+  </div>
+</div>
+
+<style>
+@media print {
+  body {
+    background: white !important;
+  }
+  .print-a4 {
+    width: 210mm !important;
+    min-height: 297mm !important;
+    box-shadow: none !important;
+    margin: 0 auto !important;
+    border: none !important;
+  }
+}
+</style>
