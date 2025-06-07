@@ -4,7 +4,6 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../auth.service';
 
-// Import all required Firebase functions and types
 import {
   getAuth,
   signInWithPhoneNumber,
@@ -37,6 +36,8 @@ export class LoginComponent {
   spinnerMessage = 'Preparing your dashboard...';
   showPhoneAuth = false;
   otpSent = false;
+  showPhoneModal = false;
+  showRecaptcha = false;
 
   // Firebase related
   recaptchaVerifier?: RecaptchaVerifier;
@@ -65,75 +66,88 @@ export class LoginComponent {
   }
 
   // 📱 Show phone input + render reCAPTCHA
-  async loginWithPhone() {
-    this.showPhoneAuth = true;
+  loginWithPhone() {
+    this.showPhoneModal = true;
+    this.phoneNumber = '';
+    this.otp = '';
+    this.otpSent = false;
+    this.showRecaptcha = false;
+    this.recaptchaVerifier = undefined;
+  }
 
-    const auth: Auth = getAuth(); // ✅ Ensure it's the correct Auth object
+  closePhoneModal() {
+    this.showPhoneModal = false;
+    this.otpSent = false;
+    this.showRecaptcha = false;
+    this.phoneNumber = '';
+    this.otp = '';
+    this.recaptchaVerifier = undefined;
+  }
 
-    // Delay to allow UI rendering
-    setTimeout(() => {
+  onPhoneInput() {
+    // Remove non-digits and limit to 10 digits
+    this.phoneNumber = this.phoneNumber.replace(/\D/g, '').slice(0, 10);
+  }
+
+  isPhoneValid(): boolean {
+    return /^\d{10}$/.test(this.phoneNumber);
+  }
+
+  // 📤 Send OTP to phone number
+  async sendOtp() {
+    if (!this.isPhoneValid()) {
+      window.alert('Please enter a valid Philippine phone number.');
+      return;
+    }
+    this.loading = true;
+    this.showRecaptcha = true;
+
+    setTimeout(async () => {
       if (!this.recaptchaVerifier) {
         this.recaptchaVerifier = new RecaptchaVerifier(
           getAuth(),
           'recaptcha-container',
           {
             size: 'normal',
-            callback: (response: any) => {
-              console.log('reCAPTCHA solved. Response:', response);
+            callback: async (response: any) => {
+              // reCAPTCHA solved, proceed to send OTP
+              try {
+                const fullPhone = '+63' + this.phoneNumber;
+                const auth: Auth = getAuth();
+                this.confirmationResult = await signInWithPhoneNumber(
+                  auth,
+                  fullPhone,
+                  this.recaptchaVerifier!
+                );
+                this.otpSent = true;
+                this.showRecaptcha = false;
+              } catch (error) {
+                window.alert('Failed to send OTP: ' + (error as any).message);
+              } finally {
+                this.loading = false;
+              }
             },
             'expired-callback': () => {
-              console.warn('reCAPTCHA expired.');
+              window.alert('reCAPTCHA expired. Please try again.');
+              this.loading = false;
+              this.showRecaptcha = false;
             }
-          },
+          }
         );
-
-        // Render reCAPTCHA widget
-        this.recaptchaVerifier.render().then((widgetId: number) => {
-          console.log('reCAPTCHA rendered with ID:', widgetId);
-        });
+        await this.recaptchaVerifier.render();
       }
     });
-  }
-
-  // 📤 Send OTP to phone number
-  async sendOtp() {
-    if (!/^(\+63|0)9\d{9}$/.test(this.phoneNumber)) {
-      window.alert('Please enter a valid Philippine phone number.');
-      return;
-    }
-    this.loading = true;
-    const auth: Auth = getAuth();
-
-    try {
-      if (!this.recaptchaVerifier) throw new Error('reCAPTCHA not initialized');
-
-      this.confirmationResult = await signInWithPhoneNumber(
-        auth,
-        this.phoneNumber,
-        this.recaptchaVerifier
-      );
-
-      this.otpSent = true;
-    } catch (error) {
-      window.alert('Failed to send OTP: ' + (error as any).message);
-    } finally {
-      this.loading = false;
-    }
   }
 
   // ✅ Verify OTP
   async verifyOtp() {
     if (!this.confirmationResult) return;
-
     this.loading = true;
-
     try {
-      const result = await this.confirmationResult.confirm(this.otp);
+      await this.confirmationResult.confirm(this.otp);
       this.loading = false;
-
-      // Optional: save user info or fetch data from Firestore
-
-      this.router.navigate(['/patient-dashboard']);
+      this.closePhoneModal();
+      this.router.navigate(['/patient']);
     } catch (error) {
       this.loading = false;
       window.alert('Invalid OTP: ' + (error as any).message);
@@ -144,6 +158,7 @@ export class LoginComponent {
   private redirectUser(email: string | null): void {
     if (!email) return;
 
+    // Only admins and HCPs use Google login, patients use phone login (handled in verifyOtp)
     if (email === this.authService.getAdminEmail()) {
       this.router.navigate(['/admin']);
     } else {

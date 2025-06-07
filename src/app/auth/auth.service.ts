@@ -24,6 +24,9 @@ export class AuthService {
       this.userSubject.next(user);
       if (!user) {
         this.router.navigate(['/auth/login']);
+      } else if (user.providerData.some(p => p.providerId === 'phone')) {
+        // If logged in with phone, redirect to /patient
+        this.router.navigate(['/patient']);
       } else {
         const isComplete = await this.isProfileComplete(user.uid);
         if (!isComplete) {
@@ -37,7 +40,7 @@ export class AuthService {
     return this.userSubject.asObservable();
   }
 
-  
+
   async getCurrentUserId(): Promise<string | null> {
     return this.userSubject.value?.uid ?? null;
   }

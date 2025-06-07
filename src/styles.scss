@@ -44,3 +44,12 @@
     margin: 0 auto !important;
     border: none !important;
   }
+/* Optional: Add subtle scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 10px;
+}
