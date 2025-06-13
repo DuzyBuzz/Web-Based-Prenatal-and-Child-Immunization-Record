@@ -1,81 +1,83 @@
-<div class="max-w-2xl mx-auto mt-10 border border-blue-200 rounded-3xl shadow-2xl p-8 bg-gradient-to-br from-white via-blue-50 to-blue-100 flex flex-col h-[85vh]">
-  <h2 class="text-3xl font-extrabold mb-2 text-center text-blue-800 tracking-wide drop-shadow-lg flex items-center justify-center gap-2">
-    <span>👨🏻‍⚕️</span> Dr. PCIRM
-  </h2>
-  <p class="text-center text-blue-700 mb-6 text-lg font-medium">AI Chat for Prenatal & Immunization Support</p>
+<div class="max-w-2xl mx-auto mt-10 border border-blue-200 rounded-3xl shadow-2xl p-10 bg-gradient-to-br from-white via-blue-50 to-blue-100 flex flex-col h-[85vh]">
+  <div class="flex flex-col h-full">
 
-  <!-- Language Selector -->
-  <div class="mb-4 flex items-center gap-2">
-    <label for="language" class="font-semibold text-gray-700">Language:</label>
-    <select id="language" [(ngModel)]="selectedLanguage" class="border border-blue-300 rounded-lg px-3 py-1 focus:ring-2 focus:ring-blue-400 bg-white shadow-sm">
-      <option value="ilongo">Ilongo</option>
-      <option value="tagalog">Tagalog</option>
-      <option value="english">English</option>
-    </select>
-  </div>
-
-  <!-- Suggestion Prompts -->
-  <div *ngIf="showSuggestions" class="mb-4 flex flex-wrap gap-2 justify-center">
-    <button
-      *ngFor="let suggestion of suggestionPrompts"
-      type="button"
-      class="bg-blue-100 hover:bg-blue-200 text-blue-800 font-medium px-4 py-2 rounded-full shadow transition"
-      (click)="onSuggestionClick(suggestion[selectedLanguage])"
-    >
-      {{ suggestion[selectedLanguage] }}
-    </button>
-  </div>
-
-  <!-- Chat History -->
-  <div #scrollContainer class="flex-1 overflow-y-auto space-y-4 pr-2 bg-white rounded-xl border border-blue-100 shadow-inner p-4">
-    <div *ngFor="let chat of chatHistory" class="flex items-end" [ngClass]="chat.role === 'user' ? 'justify-end' : 'justify-start'">
-      <!-- Avatar -->
-      <img
-        *ngIf="chat.role === 'ai'"
-        src="assets/images/doctor.png"
-        class="w-9 h-9 rounded-full mr-3 shadow"
-        alt="Dr. PCIRM"
-      />
-      <img
-        *ngIf="chat.role === 'user'"
-        src="assets/images/ask.png"
-        class="w-9 h-9 rounded-full ml-3 shadow order-last"
-        alt="You"
-      />
-
-      <!-- Message Bubble -->
-      <div
-        class="rounded-2xl px-5 py-3 max-w-[70%] whitespace-pre-wrap shadow transition-all"
-        [ngClass]="{
-          'bg-blue-500 text-white text-right ml-auto': chat.role === 'user',
-          'bg-gray-100 text-gray-800 text-left mr-auto': chat.role === 'ai'
-        }"
+    <!-- Language Selector -->
+    <div class="mb-4 flex items-center gap-4">
+      <label for="language" class="text-lg font-medium text-blue-800">Select Language:</label>
+      <select
+        id="language"
+        [(ngModel)]="selectedLanguage"
+        class="border border-blue-300 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white shadow-md text-blue-800 font-medium"
       >
-        {{ chat.message }}
-      </div>
+        <option value="ilongo">Ilongo</option>
+        <option value="tagalog">Tagalog</option>
+        <option value="english">English</option>
+      </select>
     </div>
 
-    <!-- Loading -->
-    <div *ngIf="loading" class="text-center text-sm text-blue-500 italic mt-2 animate-pulse">Nagsusulat si Dr. PCIRM...</div>
-  </div>
+    <!-- Suggestion Prompts -->
+    <div *ngIf="showSuggestions" class="mb-4 flex flex-wrap gap-2 justify-center">
+      <button
+        *ngFor="let suggestion of suggestionPrompts"
+        type="button"
+        class="bg-blue-100 hover:bg-blue-200 text-blue-800 font-medium px-4 py-2 rounded-full shadow transition"
+        (click)="onSuggestionClick(suggestion[selectedLanguage])"
+      >
+        {{ suggestion[selectedLanguage] }}
+      </button>
+    </div>
 
-  <!-- Input Form -->
-  <form (ngSubmit)="sendMessage()" class="mt-6 flex gap-3" [class.opacity-50]="loading">
-    <input
-      type="text"
-      [(ngModel)]="userMessage"
-      name="userMessage"
-      placeholder="Type your question here..."
-      class="flex-1 px-4 py-3 border border-blue-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white shadow"
-      [disabled]="loading"
-      autocomplete="off"
-    />
-    <button
-      type="submit"
-      [disabled]="loading || !userMessage.trim()"
-      class="bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold shadow hover:bg-blue-700 transition"
-    >
-      Send
-    </button>
-  </form>
+    <!-- Chat History -->
+    <div #scrollContainer class="flex-1 overflow-y-auto space-y-4 pr-2 bg-white rounded-xl border border-blue-100 shadow-inner p-4">
+      <div *ngFor="let chat of chatHistory" class="flex items-end" [ngClass]="chat.role === 'user' ? 'justify-end' : 'justify-start'">
+        <!-- Avatar -->
+        <img
+          *ngIf="chat.role === 'ai'"
+          src="assets/images/doctor.png"
+          class="w-9 h-9 rounded-full mr-3 shadow"
+          alt="Dr. PCIRM"
+        />
+        <img
+          *ngIf="chat.role === 'user'"
+          src="assets/images/ask.png"
+          class="w-9 h-9 rounded-full ml-3 shadow order-last"
+          alt="You"
+        />
+
+        <!-- Message Bubble -->
+        <div
+          class="rounded-2xl px-5 py-3 max-w-[70%] whitespace-pre-wrap shadow transition-all"
+          [ngClass]="{
+            'bg-blue-500 text-white text-right ml-auto': chat.role === 'user',
+            'bg-gray-100 text-gray-800 text-left mr-auto': chat.role === 'ai'
+          }"
+        >
+          {{ chat.message }}
+        </div>
+      </div>
+
+      <!-- Loading -->
+      <div *ngIf="loading" class="text-center text-sm text-blue-500 italic mt-2 animate-pulse">Nagsusulat si Dr. PCIRM...</div>
+    </div>
+
+    <!-- Input Form -->
+    <form (ngSubmit)="sendMessage()" class="mt-4 flex gap-3" [class.opacity-50]="loading">
+      <input
+        type="text"
+        [(ngModel)]="userMessage"
+        name="userMessage"
+        placeholder="Type your question here..."
+        class="flex-1 px-4 py-3 border border-blue-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white shadow"
+        [disabled]="loading"
+        autocomplete="off"
+      />
+      <button
+        type="submit"
+        [disabled]="loading || !userMessage.trim()"
+        class="bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold shadow hover:bg-blue-700 transition"
+      >
+        Send
+      </button>
+    </form>
+  </div>
 </div>

@@ -8,7 +8,7 @@ export const patientRoutes: Routes = [
   { path: '', component: PatientComponent, children: [
     { path: '', redirectTo: 'appointments', pathMatch: 'full' },
     { path: 'appointments', component: PatientAppointmentsComponentComponent },
-    { path: 'ai', component: AskAiComponent }
+    { path: 'dr-ai-assist', component: AskAiComponent }
 
   ]}
 ];

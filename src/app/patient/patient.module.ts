@@ -8,6 +8,7 @@ import { CommonModule } from '@angular/common';
 import { PagesModule } from '../pages/pages.module';
 import { PatientComponent } from './patient.component';
 import { patientRoutes } from './patient.routes';
+import { AskAiComponent } from './ask-ai/ask-ai.component';
 
 @NgModule({
   declarations: [
@@ -18,7 +19,8 @@ import { patientRoutes } from './patient.routes';
     SharedModule,
     FormsModule,
     CommonModule,
-    PagesModule
+    PagesModule,
+    AskAiComponent
   ],
 })
 export class PatientModule { }

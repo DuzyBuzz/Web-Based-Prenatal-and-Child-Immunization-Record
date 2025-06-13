@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { environment } from '../../environments/environment'; // Adjust the path as necessary
 import { AuthService } from '../auth/auth.service';
@@ -12,18 +12,37 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import { RouterOutlet } from '@angular/router';
+import { collection, getFirestore, query, where, getDocs } from 'firebase/firestore';
+
+export interface Appointment {
+  name: string;
+  appointmentName: string;
+  contactNumber: string;
+  // add other fields if needed
+}
+
 @Component({
   selector: 'app-patient',
-standalone: false,
+  standalone: false,
   templateUrl: './patient.component.html',
   styleUrl: './patient.component.scss'
 })
-export class PatientComponent {
+export class PatientComponent implements OnInit {
   mobileMenuOpen = false;
-    user$: Observable<User | null>; // Observable for user state
+  showChat = false; // <-- Add this line
+  user$: Observable<User | null>; // Observable for user state
+  appointments: Appointment[] = [];
+  showDot = true;
+
+
+
 
   constructor(private http: HttpClient, private authService: AuthService) {
-        this.user$ = this.authService.getCurrentUser();
+    this.user$ = this.authService.getCurrentUser();
+  }
+
+  hideDot() {
+    this.showDot = false;
   }
 
   toggleMobileMenu(): void {
@@ -43,7 +62,7 @@ export class PatientComponent {
   }
 
   sendSms(): void {
-const url = 'http://127.0.0.1:5001/prenatal-and-immunization/us-central1/sendSms';
+    const url = 'http://127.0.0.1:5001/prenatal-and-immunization/us-central1/sendSms';
 
     const body = {
       to: '+639511365191',
@@ -62,33 +81,35 @@ const url = 'http://127.0.0.1:5001/prenatal-and-immunization/us-central1/sendSms
     });
   }
 
-    calendarOptions!: CalendarOptions;
+  calendarOptions!: CalendarOptions;
 
-  ngOnInit() {
-    this.calendarOptions = {
-      plugins: [dayGridPlugin, timeGridPlugin],
-      initialView: 'dayGridMonth',
-      headerToolbar: {
-      },
-      editable: true,
-      selectable: true,
-      events: [
-        { title: 'Prenatal Checkup', date: '2025-04-05', color: '#34D399' },
-        { title: '1st Hepatitis B Vaccine', date: '2025-04-10', color: '#F87171' },
-        { title: 'BCG Vaccine', date: '2025-04-15', color: '#60A5FA' },
-        { title: 'Polio Vaccine', date: '2025-04-20', color: '#FBBF24' },
-        { title: 'MMR Vaccine', date: '2025-05-01', color: '#A78BFA' },
-      ],
-      eventClick: this.onEventClick.bind(this),
-    };
+  async ngOnInit() {
+    this.user$.subscribe(async user => {
+      if (user && user.phoneNumber) {
+        // Remove '+63' if your Firestore stores numbers as '09...' instead of '+639...'
+        let contactNumber = user.phoneNumber;
+        if (contactNumber.startsWith('+63')) {
+          contactNumber = '0' + contactNumber.slice(3);
+        }
+
+        const db = getFirestore();
+        const q = query(
+          collection(db, 'appointment'), // Change to your actual collection name if needed
+          where('contactNumber', '==', contactNumber)
+        );
+        const querySnapshot = await getDocs(q);
+        this.appointments = querySnapshot.docs.map(doc => doc.data() as Appointment);
+      } else {
+        this.appointments = [];
+      }
+    });
   }
 
   onEventClick(eventInfo: any) {
     alert(`Appointment: ${eventInfo.event.title}\nDate: ${eventInfo.event.start.toISOString().split('T')[0]}`);
   }
 
-
-    logout() {
+  logout() {
     this.authService.logout();
   }
 }

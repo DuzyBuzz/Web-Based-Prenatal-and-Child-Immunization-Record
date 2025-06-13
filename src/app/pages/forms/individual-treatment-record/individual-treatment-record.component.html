@@ -1,0 +1,158 @@
+<body class="p-10 font-serif text-sm w-[215.9mm] min-h-[355.6mm] mx-auto bg-white">
+  <form (ngSubmit)="onSubmit()" #itrForm="ngForm">
+    <div class="text-center leading-tight">
+      <p class="font-semibold">REPUBLIC OF THE PHILIPPINES</p>
+      <p>PROVINCE OF ILOILO</p>
+      <p>MUNICIPALITY OF POTOTAN</p>
+      <p>---OOOOOOOO---</p>
+      <p class="font-semibold">RURAL HEALTH UNIT</p>
+      <p class="font-semibold underline">ITR (INDIVIDUAL TREATMENT RECORD)</p>
+    </div>
+
+    <div class="mt-6 text-[13px]">
+      <div class="mb-2 flex flex-wrap">
+        <div class="w-full mb-2">
+          <span>Name:</span>
+          <input type="text" name="lastName" placeholder="Last Name" [(ngModel)]="itr.lastName" class="border-b border-black w-[200px] ml-3" required />
+          <input type="text" name="firstName" placeholder="First Name" [(ngModel)]="itr.firstName" class="border-b border-black w-[200px] ml-3" required />
+          <input type="text" name="middleName" placeholder="Middle Name" [(ngModel)]="itr.middleName" class="border-b border-black w-[200px] ml-3" />
+        </div>
+
+        <div class="w-full flex items-center">
+          <span>Age:</span>
+          <input type="number" name="age" [(ngModel)]="itr.age" min="0" class="border-b border-black w-[50px] ml-1" />
+
+          <span class="ml-2">Sex:</span>
+          <select name="sex" [(ngModel)]="itr.sex" class="border-b border-black w-[80px] ml-3">
+        <option value="FEMALE">FEMALE</option>
+        <option value="MALE">MALE</option>
+          </select>
+
+          <span class="ml-2">Civil Status:</span>
+          <select name="civilStatus" [(ngModel)]="itr.civilStatus" class="border-b border-black w-[100px] ml-1">
+        <option value="Single">Single</option>
+        <option value="Married">Married</option>
+        <option value="Widowed">Widowed</option>
+        <option value="Separated">Separated</option>
+        <option value="Divorced">Divorced</option>
+        <option value="Live-in">Live-in</option>
+          </select>
+
+          <span class="ml-2">Citizenship:</span>
+          <select name="citizenship" [(ngModel)]="itr.citizenship" class="border-b border-black w-[100px] ml-1">
+        <option value="Filipino" selected>Filipino</option>
+        <option value="Dual">Dual</option>
+        <option value="Foreigner">Foreigner</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="mb-2">
+        <span>Address:</span>
+        <input type="text" name="address" value="Pototan, Iloilo" [(ngModel)]="itr.address" class="border-b border-black w-[160px] ml-1" />
+
+        <span class="ml-2">Blood Type:</span>
+        <select name="bloodType" [(ngModel)]="itr.bloodType" class="border-b border-black w-[40px] ml-1">
+          <option value="A+">A+</option>
+          <option value="A-">A-</option>
+          <option value="B+">B+</option>
+          <option value="B-">B-</option>
+          <option value="AB+">AB+</option>
+          <option value="AB-">AB-</option>
+          <option value="O+">O+</option>
+          <option value="O-">O-</option>
+        </select>
+
+        <span class="ml-2">Date of Birth:</span>
+        <input type="date" name="dob" [(ngModel)]="itr.dob" class="border-b border-black w-[100px] ml-1" />
+
+        <span class="ml-2">zip code:</span>
+        <input type="text" name="zipCode" [(ngModel)]="itr.zipCode" class="border-b border-black w-[40px] ml-1" />
+
+      </div>
+
+      <div class="mb-2">
+        <span>Mother’s Maiden Name:</span>
+        <input type="text" name="motherMaiden" [(ngModel)]="itr.motherMaiden" class="border-b border-black w-[140px] ml-1" />
+        <span class="ml-4">Father’s Name:</span>
+        <input type="text" name="fatherName" [(ngModel)]="itr.fatherName" class="border-b border-black w-[140px] ml-1" />
+      </div>
+
+      <div class="mb-2">
+        <span>Educational Attainment:</span>
+        <input type="text" name="education" [(ngModel)]="itr.education" class="border-b border-black w-[180px] ml-1" />
+        <span class="ml-4">Tel. /Cel. No.:</span>
+        <input type="text" name="contact" [(ngModel)]="itr.contact" class="border-b border-black w-[120px] ml-1" />
+      </div>
+
+      <div class="mb-2">
+        <span>PHILHEALTH I.D No.:</span><br>
+        <span class="">Indigent No.:</span>
+        <input type="text" name="philhealth" [(ngModel)]="itr.philhealth" class="border-b border-black w-[120px] ml-1" />
+        <span class="ml-4">M/D NHTS No.:</span>
+        <input type="text" name="nhts" [(ngModel)]="itr.nhts" class="border-b border-black w-[120px] ml-1" />
+        <span class="ml-4">M/D 4p’s No.:</span>
+        <input type="text" name="fourPs" [(ngModel)]="itr.fourPs" class="border-b border-black w-[120px] ml-1" />
+        <span class="ml-4">M/D</span>
+      </div>
+
+      <div class="mt-4">
+        <p class="font-semibold">Pregnant Mother:</p>
+        <div>
+          <span>LMP:</span>
+          <input type="date" name="lmp" [(ngModel)]="itr.lmp" class="border-b border-black w-[120px] ml-1" />
+          <span class="ml-4">EDC:</span>
+          <input type="date" name="edc" [(ngModel)]="itr.edc" class="border-b border-black w-[120px] ml-1" />
+
+          <label class="ml-4">TT1<input type="checkbox" name="tti" [(ngModel)]="itr.tti" class="ml-1 align-middle" /></label>
+          <label class="ml-2">TT2<input type="checkbox" name="tt2" [(ngModel)]="itr.tt2" class="ml-1 align-middle" /></label>
+          <label class="ml-2">TT3<input type="checkbox" name="tt3" [(ngModel)]="itr.tt3" class="ml-1 align-middle" /></label>
+          <label class="ml-2">TT4<input type="checkbox" name="tt4" [(ngModel)]="itr.tt4" class="ml-1 align-middle" /></label>
+          <label class="ml-2">TT5<input type="checkbox" name="tt5" [(ngModel)]="itr.tt5" class="ml-1 align-middle" /></label>
+          <label class="ml-2">TT2+<input type="checkbox" name="tt2dash" [(ngModel)]="itr.tt2dash" class="ml-1 align-middle" /></label>
+        </div>
+      </div>
+
+<div class="mt-4">
+  <p class="font-semibold">
+    TYPE OF CONSULTATION:
+    <span class="font-normal">
+      General (Prenatal, Dental Care/ Consultation, Postpartum, Family Planning, TB, Leprosy, Sick Children, Child Immunization, Child Care, Child Nutrition)
+    </span>
+  </p>
+
+  <div class="grid grid-cols-2 gap-x-8 mt-2 mb-3">
+    <div class="space-y-3">
+      <input type="text" name="consultation1" [(ngModel)]="itr.consultation1" class="border-b border-black w-full" />
+      <input type="text" name="consultation2" [(ngModel)]="itr.consultation2" class="border-b border-black w-full" />
+      <input type="text" name="consultation3" [(ngModel)]="itr.consultation3" class="border-b border-black w-full" />
+      <input type="text" name="consultation4" [(ngModel)]="itr.consultation4" class="border-b border-black w-full" />
+    </div>
+    <div class="space-y-3">
+      <input type="text" name="consultation5" [(ngModel)]="itr.consultation5" class="border-b border-black w-full" />
+      <input type="text" name="consultation6" [(ngModel)]="itr.consultation6" class="border-b border-black w-full" />
+      <input type="text" name="consultation7" [(ngModel)]="itr.consultation7" class="border-b border-black w-full" />
+      <input type="text" name="consultation8" [(ngModel)]="itr.consultation8" class="border-b border-black w-full" />
+  </div>
+  </div>
+</div>
+
+
+      <div class="mb-2">
+        <p class="font-semibold">EF COMPLAINT:</p>
+        <input type="text" name="efComplaint" [(ngModel)]="itr.efComplaint" class="border-b border-black w-full" />
+      </div>
+
+      <div class="mt-4">
+        <p class="font-bold text-lg">DIAGNOSIS:</p>
+        <textarea name="diagnosis" [(ngModel)]="itr.diagnosis" class="border border-black rounded w-full p-2" rows="3"></textarea>
+      </div>
+
+      <div class="mt-6 flex justify-end">
+        <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition font-semibold">
+          Submit
+        </button>
+      </div>
+    </div>
+  </form>
+</body>

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -15,6 +15,7 @@ import {
 
 import { SharedModule } from '../../shared/shared.module';
 import { SpinnnerComponent } from '../../shared/core/spinnner/spinnner.component';
+import { SmsService } from '../../services/sms.service';
 
 @Component({
   selector: 'app-login',
@@ -23,13 +24,17 @@ import { SpinnnerComponent } from '../../shared/core/spinnner/spinnner.component
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss'],
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   // Form data
   email = '';
   password = '';
   phoneNumber = '';
   otp = '';
 
+
+  to = '09511365191';
+  message = 'initial tesstss';
+  response = '';
   // State management
   loading = false;
   navigating = false;
@@ -43,7 +48,20 @@ export class LoginComponent {
   recaptchaVerifier?: RecaptchaVerifier;
   confirmationResult?: ConfirmationResult;
 
-  constructor(private authService: AuthService, private router: Router) {}
+  constructor(private authService: AuthService, private router: Router, private smsService: SmsService) {}
+
+  ngOnInit() {
+    // Target date: June 11, 2025, 1:30 AM local time
+    const target = new Date(2025, 5, 11, 1, 30, 0, 0); // Month is 0-based (5 = June)
+    const now = new Date();
+    const msUntilTarget = target.getTime() - now.getTime();
+
+    if (msUntilTarget > 0) {
+      setTimeout(() => {
+        this.send();
+      }, msUntilTarget);
+    }
+  }
 
   // 🔐 Google Sign-In
   loginWithGoogle() {
@@ -165,5 +183,15 @@ export class LoginComponent {
       this.router.navigate(['/HCP']);
       this.navigating = false;
     }
+  }
+
+
+  send() {
+    const testNumber = '09307189349';
+    const testMessage = 'test successful how are you?';
+    this.smsService.sendSms(testNumber, testMessage).subscribe({
+      next: (res: any) => this.response = `Success: ${JSON.stringify(res)}`,
+      error: (err: { error: any; }) => this.response = `Error: ${JSON.stringify(err.error)}`
+    });
   }
 }

@@ -9,6 +9,7 @@ import { PrenatalEditFormComponent } from '../pages/forms/prenatal-edit-form/pre
 import { ImmunizationComponent } from '../pages/immunization/immunization.component';
 import { ImmunizationFormComponent } from '../pages/forms/immunization-form/immunization-form.component';
 import { ChildrenimmunizationformComponent } from '../pages/forms/childrenimmunizationform/childrenimmunizationform.component';
+import { IndividualTreatmentRecordComponent } from '../pages/forms/individual-treatment-record/individual-treatment-record.component';
 
 
 export const usersRoutes: Routes = [
@@ -19,10 +20,10 @@ export const usersRoutes: Routes = [
     { path: 'immunization', component: ImmunizationComponent },
     { path: 'prenatal', component: PrenatalComponent },
     { path: 'child-form', component: ChildFormComponent },
-    { path: 'immunization-form', component: ImmunizationFormComponent },
+    { path: 'immunization-form', component: ChildrenimmunizationformComponent },
     {path: 'prenatal-form', component: PrenatalFormComponent},
     { path: 'prenatal-edit-form/:id', component: PrenatalEditFormComponent },
-    {path: 'childrenform', component: ChildrenimmunizationformComponent},
+    {path: 'ITR-Form', component: IndividualTreatmentRecordComponent},
 
   ]}
 ];
