@@ -5,6 +5,7 @@ import { Auth } from '@angular/fire/auth';
 import { inject } from '@angular/core';
 import { forkJoin, Observable } from 'rxjs';
 import { Router } from '@angular/router';
+import { map } from 'rxjs/operators';
 
 @Component({
   selector: 'app-prenatal',
@@ -14,10 +15,7 @@ import { Router } from '@angular/router';
 })
 export class PrenatalComponent implements OnInit, OnDestroy, OnChanges {
   isModalOpen: boolean = false; // Flag to control modal visibility
-  motherForm!: FormGroup;
-  emergencyForm!: FormGroup;
-  showEmergency = false;
-  mothers: any[] = [];
+  mothers: any[] = []; // This will now hold ITR records
   searchHospitalTerm: string = '';
   searchAttendantTerm: string = '';
   searchPatientTerm: string = '';
@@ -42,13 +40,13 @@ export class PrenatalComponent implements OnInit, OnDestroy, OnChanges {
   currentUserUid: string | null = null;
   navigating= false;
   spinnerMessage = '';
-
-
+  emergencyForm: any;
+  motherForm: any;
+  showEmergency: boolean | undefined;
 
   toggleActionButtons(motherId: string) {
     this.selectedMotherId = this.selectedMotherId === motherId ? null : motherId;
   }
-
 
   private clickListener!: () => void;
 
@@ -65,38 +63,32 @@ export class PrenatalComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   ngOnInit(): void {
-    this.fetchMothers();
+    this.fetchITRRecords();
     this.loadUserDetails();
     this.auth.onAuthStateChanged(user => {
       this.currentUserUid = user?.uid || null;
     });
-    // Set timeout for 1 minute to show "no patient found"
     setTimeout(() => {
       if (this.loading && this.mothers.length === 0) {
         this.noPatientFound = true;
         this.loading = false;
       }
-    }, 60000); // 60 seconds
-    this.motherForm = this.fb.group({
-      name: ['', Validators.required],
-      homeAddress: ['', Validators.required],
-      contactNumber: ['', Validators.required],
-      lastMenstruationDate: ['', Validators.required],
-      dueDate: ['', Validators.required]
-    });
-
-
-    this.emergencyForm = this.fb.group({
-      spouseName: [''],
-      spouseContact: [''],
-      parentName: [''],
-      parentContact: [''],
-      fatherName: [''],
-      fatherContact: ['']
-    });
-
-    this.loadMothers();
+    }, 60000);
+    // Remove motherForm and emergencyForm if not needed for ITR
+    this.loadITRRecords();
     this.clickListener = this.renderer.listen('document', 'click', (event: MouseEvent) => this.onDocumentClick(event));
+  }
+  loadITRRecords() {
+    throw new Error('Method not implemented.');
+  }
+
+  // Fetch all ITR records
+  fetchITRRecords() {
+    const ref = collection(this.firestore, 'itr');
+    collectionData(ref, { idField: 'id' }).subscribe((data: any[]) => {
+      this.mothers = data;
+      this.loading = false;
+    });
   }
 
   toggleFilterByOwn(): void {
@@ -182,7 +174,7 @@ export class PrenatalComponent implements OnInit, OnDestroy, OnChanges {
       try {
         this.navigating = true;
         this.spinnerMessage = 'Saving Patient Information...'
-        const ref = collection(this.firestore, 'mothers');
+        const ref = collection(this.firestore, 'itr');
         await addDoc(ref, data);
 
         this.notificationMessage = 'Mother and emergency info saved successfully!';
@@ -211,7 +203,7 @@ export class PrenatalComponent implements OnInit, OnDestroy, OnChanges {
 
   openDeleteModal(mother: any): void {
     const currentUserUid = this.auth.currentUser?.uid;
-    if (mother.uid !== currentUserUid) {
+    if (mother.createdBy !== currentUserUid) {
       this.showPermissionError = true;
       return;
     }
@@ -223,7 +215,7 @@ export class PrenatalComponent implements OnInit, OnDestroy, OnChanges {
 
   // Load mothers from Firestore and populate user details
   loadMothers(): void {
-    const ref = collection(this.firestore, 'mothers');
+    const ref = collection(this.firestore, 'itr');
     collectionData(ref, { idField: 'id' }).subscribe((data: any[]) => {
       this.mothers = data;
       this.loadUserDetailsForMothers();
@@ -233,7 +225,7 @@ export class PrenatalComponent implements OnInit, OnDestroy, OnChanges {
     loadUserDetailsForMothers(): void {
       // Use forkJoin to fetch user details for all mothers concurrently
       const userDetailsObservables: Observable<any>[] = this.mothers.map(mother => {
-        const userRef = doc(this.firestore, `users/${mother.uid}`);
+        const userRef = doc(this.firestore, `users/${mother.createdBy}`);
         return docData(userRef);
       });
 
@@ -257,30 +249,22 @@ export class PrenatalComponent implements OnInit, OnDestroy, OnChanges {
 
   filteredMothers() {
     const currentUserUid = this.auth.currentUser?.uid;
-
     let filtered = this.mothers;
 
     if (this.filterByOwn) {
-      // Filter only the mother's records belonging to the current user
-      filtered = filtered.filter(mother => mother.uid === currentUserUid);
-    }
-
-    // Filter based on search terms if provided
-    if (this.searchHospitalTerm.trim()) {
-      filtered = filtered.filter(mother =>
-        mother.hospitalName?.toLowerCase().includes(this.searchHospitalTerm.toLowerCase())
-      );
+      filtered = filtered.filter(itr => itr.createdBy === currentUserUid);
     }
 
     if (this.searchAttendantTerm.trim()) {
-      filtered = filtered.filter(mother =>
-        mother.attendantName?.toLowerCase().includes(this.searchAttendantTerm.toLowerCase())
+      filtered = filtered.filter(itr =>
+        (itr.nurseName || '').toLowerCase().includes(this.searchAttendantTerm.toLowerCase())
       );
     }
 
     if (this.searchPatientTerm.trim()) {
-      filtered = filtered.filter(mother =>
-        mother.name.toLowerCase().includes(this.searchPatientTerm.toLowerCase())
+      filtered = filtered.filter(itr =>
+        (`${itr.lastName || ''} ${itr.firstName || ''} ${itr.middleName || ''}`.toLowerCase()
+        .includes(this.searchPatientTerm.toLowerCase()))
       );
     }
 
@@ -298,7 +282,7 @@ export class PrenatalComponent implements OnInit, OnDestroy, OnChanges {
 
     // Check if the logged-in user UID matches the mother UID
     const currentUserUid = this.auth.currentUser?.uid;
-    if (mother.uid !== currentUserUid) {
+    if (mother.createdBy !== currentUserUid) {
       this.showPermissionError = true;
       return;
     }
@@ -330,9 +314,9 @@ export class PrenatalComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   async deleteMother(): Promise<void> {
-    if (this.confirmName === this.selectedMother.name) {
+    if (this.confirmName === this.selectedMother.firstName + ' ' + this.selectedMother.middleName + ' ' + this.selectedMother.lastName) {
       try {
-        const ref = doc(this.firestore, 'mothers', this.selectedMother.id);
+        const ref = doc(this.firestore, 'itr', this.selectedMother.id);
         await deleteDoc(ref);
         this.navigating= true;
         this.spinnerMessage = "Deleting Patient...";
@@ -349,7 +333,7 @@ export class PrenatalComponent implements OnInit, OnDestroy, OnChanges {
 
   openEditForm(mother: any): void {
     const currentUserUid = this.auth.currentUser?.uid;
-    if (mother.uid !== currentUserUid) {
+    if (mother.createdBy !== currentUserUid) {
       this.showPermissionError = true;
       return;
     }

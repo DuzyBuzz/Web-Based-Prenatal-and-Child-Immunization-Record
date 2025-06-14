@@ -2,11 +2,11 @@
 
 <div class="relative">
 
-  <!-- Toggle Sidebar Button -->
+  <!-- Toggle Sidebar Button
   <button (click)="toggleSidebar()" class="absolute top-4 left-4 bg-sky-400 text-white p-2 rounded-full shadow-md transition-transform transform duration-300">
     <img *ngIf="!isSidebarHidden" src="assets/images/extract.png" alt="Hide Sidebar" class="w-6 h-6" />
     <img *ngIf="isSidebarHidden" src="assets/images/compress.png" alt="Show Sidebar" class="w-6 h-6" />
-  </button>
+  </button> -->
 
   <!-- Sidebar -->
   <aside
@@ -97,21 +97,75 @@
 
           <!-- Mother Info -->
           <div class="flex flex-col space-y-1">
-            <p class="text-blue-800 font-semibold text-lg cursor-pointer transition-colors duration-300" (click)="selectMother(mother.id)">
-              <strong class="font-bold text-blue-900">Patient Name:</strong> {{ mother.name }}
+<p
+  class="text-blue-800 font-semibold text-lg cursor-pointer transition-colors duration-300"
+  [routerLink]="['/HCP/ITR-Records']"
+  [queryParams]="{ firstName: mother.firstName, middleName: mother.middleName, lastName: mother.lastName }"
+>
+  <strong class="font-bold text-blue-900">Patient Name:</strong>
+  {{ mother.firstName }} {{ mother.middleName }} {{ mother.lastName }}
+</p>
+            <p class="text-gray-600 text-sm">
+              TT1:
+              <input
+              type="checkbox"
+              [checked]="mother.tti"
+              disabled
+              class="ml-2 accent-green-500"
+              />
             </p>
-            <p class="text-gray-600 text-sm">Gravida: <span class="font-medium">{{ mother.g || 'N/A' }}</span></p>
-            <p class="text-gray-600 text-sm">Spouse: <span class="font-medium">{{ mother.spouseName || 'N/A' }}</span></p>
+            <p class="text-gray-600 text-sm">
+              TT2:
+              <input
+              type="checkbox"
+              [checked]="mother.tt2"
+              disabled
+              class="ml-2 accent-green-500"
+              />
+            </p>
 
             <!-- Display User Details based on Mother UID -->
-            <p class="text-gray-600 text-sm">Attendant: <span class="font-medium">{{ mother.attendantName || 'N/A' }}</span></p>
-            <p class="text-gray-600 text-sm">Hospital Name: <span class="font-medium">{{ mother.hospitalName || 'N/A' }}</span></p>
-            <p class="text-gray-600 text-sm">Hospital Address: <span class="font-medium">{{ mother.hospitalAddress || 'N/A' }}</span></p>
+            <p class="text-gray-600 text-sm">
+              TT3:
+              <input
+              type="checkbox"
+              [checked]="mother.tt3"
+              disabled
+              class="ml-2 accent-green-500"
+              />
+            </p>
+            <p class="text-gray-600 text-sm">
+              TT4:
+              <input
+              type="checkbox"
+              [checked]="mother.tt4"
+              disabled
+              class="ml-2 accent-green-500"
+              />
+            </p>
+            <p class="text-gray-600 text-sm">
+              TT5:
+              <input
+              type="checkbox"
+              [checked]="mother.tt5"
+              disabled
+              class="ml-2 accent-green-500"
+              />
+            </p>
+            <p class="text-gray-600 text-sm">
+              TT2+:
+              <input
+              type="checkbox"
+              [checked]="mother.tt2dash"
+              disabled
+              class="ml-2 accent-green-500"
+              />
+            </p>
           </div>
 
           <!-- Actions -->
           <div class="relative flex items-center space-x-2">
-            <ng-container *ngIf="mother.uid === currentUserUid; else noPermission">
+            <ng-container *ngIf="mother.createdBy === currentUserUid; else noPermission">
               <button (click)="toggleActionButtons(mother.id)" class="p-2 w-10 h-10 text-green-500 hover:text-green-800 transition-all duration-300 ease-in-out rounded-full">
                 <span class="text-3xl font-black">
                   {{ selectedMotherId === mother.id ? '‹' : '›' }}
@@ -120,7 +174,7 @@
 
               <div *ngIf="selectedMotherId === mother.id" class="flex items-center space-x-2">
                 <button
-                (click)="openModal(mother.id)"
+                [routerLink]="['/HCP/ITR-Edit-Form', mother.id]"
                 class="px-3 py-1 text-sm font-medium text-yellow-600 border border-yellow-300 rounded hover:bg-blue-100 transition-all duration-300 ease-in-out">
                   Edit
                 </button>
@@ -133,11 +187,14 @@
           </div>
 
           <!-- No Permission message -->
-          <ng-template #noPermission>
-            <span class="cursor-pointer px-3 py-1 text-sm font-medium text-red-500 border border-red-300 rounded hover:bg-red-100 transition-all duration-300 ease-in-out">
-              You cannot edit or delete this record.
-            </span>
-          </ng-template>
+            <ng-template #noPermission>
+            <img
+              src="assets/images/block.png"
+              alt="No Permission"
+              class="w-6 h-6 cursor-not-allowed"
+              title="You cannot edit or delete this record."
+            />
+            </ng-template>
 
         </div>
 
@@ -170,7 +227,7 @@
     <input
       type="text"
       [(ngModel)]="confirmName"
-      [placeholder]="selectedMother?.name"
+      [placeholder]="selectedMother?.firstName + ' ' + selectedMother?.middleName + ' ' + selectedMother?.lastName"
       class="w-full border border-gray-300 rounded p-2 mb-4 transition-all duration-300 ease-in-out"
     />
 
@@ -184,11 +241,11 @@
 
       <button
         (click)="deleteMother()"
-        [disabled]="confirmName !== selectedMother?.name"
+        [disabled]="confirmName !== selectedMother?.firstName + ' ' + selectedMother?.middleName + ' ' + selectedMother?.lastName"
         class="px-6 py-2 rounded transition-colors duration-300"
         [ngClass]="{
-          'bg-red-500 text-white hover:bg-red-600': confirmName === selectedMother?.name,
-          'bg-red-200 text-red-600 cursor-not-allowed': confirmName !== selectedMother?.name
+          'bg-red-500 text-white hover:bg-red-600': confirmName === selectedMother?.firstName + ' ' + selectedMother?.middleName + ' ' + selectedMother?.lastName,
+          'bg-red-200 text-red-600 cursor-not-allowed': confirmName !== selectedMother?.firstName + ' ' + selectedMother?.middleName + ' ' + selectedMother?.lastName
         }"
       >
         Delete
@@ -208,12 +265,6 @@
   </div>
 
 </div>
-<!-- Show record component after mother selected -->
-<app-mothers-pregnancy-record
-  *ngIf="selectedMotherId"
-  [motherId]="selectedMotherId"
-  class="block mt-6">
-</app-mothers-pregnancy-record>
 
 <!-- Modal for PrenatalEditForm -->
 <div

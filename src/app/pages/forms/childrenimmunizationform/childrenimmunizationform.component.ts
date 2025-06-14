@@ -24,10 +24,9 @@ export class ChildrenimmunizationformComponent {
       const contact = this.formData.contact;
       const nextImmunization = this.getSecondWednesdayNextMonth();
       const message =
-        `Good day, ${name}! This is a reminder from Pototan RHU: ` +
-        `Your child's next immunization schedule is every 2nd Wednesday of the month. ` +
-        `The next session will be on ${nextImmunization}. ` +
-        `You will also receive a reminder on the day of your appointment. Thank you for prioritizing your child's health.`;
+        `Good day, ${name}! ` +
+        `Your child's next immunization schedule will be on ${nextImmunization}. ` +
+        `You will also receive a reminder on the day of your appointment.`;
 
       // Send SMS if contact is provided
       if (contact) {

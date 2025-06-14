@@ -1,18 +1,17 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
-import { Firestore, doc, getDoc, updateDoc, addDoc, collection } from '@angular/fire/firestore';
+import { Firestore, collection, doc, getDoc, getDocs, updateDoc, addDoc } from '@angular/fire/firestore';
 import { FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { SmsService } from '../../../services/sms.service';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AuthService } from '../../../auth/auth.service';
-
 @Component({
-  selector: 'app-individual-treatment-record',
+  selector: 'app-itr-records',
   imports: [CommonModule, FormsModule, RouterLink, ReactiveFormsModule],
-  templateUrl: './individual-treatment-record.component.html',
-  styleUrl: './individual-treatment-record.component.scss'
+  templateUrl: './itr-records.component.html',
+  styleUrls: ['./itr-records.component.scss']
 })
-export class IndividualTreatmentRecordComponent implements OnInit {
+export class ItrRecordsComponent implements OnInit {
   motherId: string | null = null;
   itr: any = {};
   itrDocId: string | null = null;
@@ -56,6 +55,8 @@ export class IndividualTreatmentRecordComponent implements OnInit {
   isTTValid: any;
   isConsultationValid: any;
   diagnosis: any;
+  itrs: any[] = [];
+  filteredItrs: any[] = [];
 
   constructor(
     private authService: AuthService,
@@ -64,18 +65,28 @@ export class IndividualTreatmentRecordComponent implements OnInit {
     private route: ActivatedRoute
   ) {}
 
-  ngOnInit() {
-    this.motherId = this.route.snapshot.paramMap.get('motherId');
-    if (this.motherId) {
-      // Fetch the ITR record by document ID
-      const itrDocRef = doc(this.firestore, 'itr', this.motherId);
-      getDoc(itrDocRef).then(snapshot => {
-        if (snapshot.exists()) {
-          this.itr = snapshot.data();
-          this.itrDocId = snapshot.id;
-        }
-      });
-    }
+  async ngOnInit() {
+    // Get all ITRs
+    const querySnapshot = await getDocs(collection(this.firestore, 'itr'));
+    this.itrs = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    // Get query params
+    this.route.queryParams.subscribe(params => {
+      const firstName = (params['firstName'] || '').trim().toLowerCase();
+      const middleName = (params['middleName'] || '').trim().toLowerCase();
+      const lastName = (params['lastName'] || '').trim().toLowerCase();
+
+      if (firstName || middleName || lastName) {
+        this.filteredItrs = this.itrs.filter(itr =>
+          (itr.firstName || '').trim().toLowerCase() === firstName &&
+          (itr.middleName || '').trim().toLowerCase() === middleName &&
+          (itr.lastName || '').trim().toLowerCase() === lastName
+        );
+      } else {
+        this.filteredItrs = this.itrs;
+      }
+    });
+
     setInterval(() => {
       this.now = new Date();
     }, 1000);

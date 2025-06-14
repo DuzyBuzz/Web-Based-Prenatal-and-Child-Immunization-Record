@@ -10,6 +10,7 @@ import { PrenatalEditRecordComponent } from "../../forms/prenatal-edit-record/pr
 import * as XLSX from 'xlsx';
 import { SpinnnerComponent } from '../../../shared/core/spinnner/spinnner.component';
 import { Router } from '@angular/router';
+import { collection, query, where, getDocs } from '@angular/fire/firestore';
 
 @Component({
   selector: 'app-mothers-pregnancy-record',
@@ -276,8 +277,11 @@ columns = [
   }
 
   loadPrenatalRecords() {
-    this.mothersService.getPrenatalRecords(this.motherId!).then(records => {
-      this.records = records.map(rec => ({ id: rec.id, ...rec.data }));
+    // Fetch from 'itr' collection where motherId matches
+    const itrCollection = collection(this.firestore, 'itr');
+    const q = query(itrCollection, where('motherId', '==', this.motherId));
+    getDocs(q).then(snapshot => {
+      this.records = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     });
   }
 

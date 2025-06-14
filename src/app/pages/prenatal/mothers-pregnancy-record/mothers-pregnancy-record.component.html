@@ -4,7 +4,7 @@
   <div *ngIf="loading" class="text-center text-blue-500">Loading...</div>
   <div *ngIf="!loading && motherData">
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-9 gap-6 text-sm text-gray-700 text-left max-w-7xl mx-auto">
-      <div><span class="font-semibold text-blue-500">Name:</span><br> {{ motherData?.name || 'N/A' }}</div>
+      <div><span class="font-semibold text-blue-500">Name:</span><br> {{ motherData?.firstname || 'N/A' }}</div>
       <div><span class="font-semibold text-blue-500">Home Address:</span><br> {{ motherData?.homeAddress || 'N/A' }}</div>
       <div><span class="font-semibold text-blue-500">Age:</span><br> {{ motherData?.age || 'N/A' }}</div>
       <div><span class="font-semibold text-blue-500">G:</span><br> {{ motherData?.g || 'N/A' }}</div>

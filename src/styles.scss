@@ -53,3 +53,32 @@
   background-color: #cbd5e1;
   border-radius: 10px;
 }
+@media print {
+  @page {
+    size: A4;
+    margin: 10mm;
+  }
+  body * {
+    visibility: hidden !important;
+  }
+  #print-section, #print-section * {
+    visibility: visible !important;
+  }
+  #print-section {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 210mm !important;
+    height: 297mm !important;    // <-- Use height, not min-height
+    min-height: unset !important;
+    max-height: 297mm !important;
+    box-shadow: none !important;
+    margin: 0 auto !important;
+    border: none !important;
+    overflow: hidden !important; // <-- Prevents extra blank page
+    background: white !important;
+  }
+  .print\:hidden {
+    display: none !important;
+  }
+}

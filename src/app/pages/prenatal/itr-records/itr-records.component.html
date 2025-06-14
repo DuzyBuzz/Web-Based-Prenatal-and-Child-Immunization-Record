@@ -10,6 +10,7 @@
   </button>
 </div>
 
+  <div class="overflow-y-auto max-h-[90vh] space-y-8 p-4 bg-gray-50 rounded-lg">
   <form (ngSubmit)="onSubmit(itrForm)" #itrForm="ngForm" >
   <div *ngIf="showFormError" class="text-red-700 font-semibold mb-2">
     Please fill up all required fields.
@@ -392,21 +393,23 @@
       </div>
 
       <div class="mt-6 flex justify-end mb-5">
+            <div class="flex justify-start items-center mb-1">
+      <span class="text-xs text-gray-600 font-medium">
+        {{ now | date:'fullDate' }} {{ now | date:'shortTime' }}
+      </span>
+    </div>
         <!-- Disable the button if the form is invalid (none or not all required fields are filled) -->
-<button
+<!-- <button
   type="button"
   class="px-6 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition font-semibold print:hidden"
   (click)="printAndSaveOrUpdateITR(itrForm)"
   [disabled]="itrForm.invalid"
 >
   {{ motherId ? 'Update & Print' : 'Save & Print' }}
-</button>
+</button> -->
       </div>
     </div>
-        <div class="flex justify-start items-center mb-1">
-      <span class="text-xs text-gray-600 font-medium">
-        {{ now | date:'fullDate' }} {{ now | date:'shortTime' }}
-      </span>
-    </div>
+
   </form>
+  </div>
 </body>

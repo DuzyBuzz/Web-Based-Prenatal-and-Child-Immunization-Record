@@ -10,6 +10,7 @@ import { ImmunizationComponent } from '../pages/immunization/immunization.compon
 import { ImmunizationFormComponent } from '../pages/forms/immunization-form/immunization-form.component';
 import { ChildrenimmunizationformComponent } from '../pages/forms/childrenimmunizationform/childrenimmunizationform.component';
 import { IndividualTreatmentRecordComponent } from '../pages/forms/individual-treatment-record/individual-treatment-record.component';
+import { ItrRecordsComponent } from '../pages/prenatal/itr-records/itr-records.component';
 
 
 export const usersRoutes: Routes = [
@@ -18,12 +19,13 @@ export const usersRoutes: Routes = [
     { path: 'appointments', component: AppointmentsComponent },
     { path: 'child-immunization', component: ChildrenComponent },
     { path: 'immunization', component: ImmunizationComponent },
-    { path: 'prenatal', component: PrenatalComponent },
-    { path: 'child-form', component: ChildFormComponent },
-    { path: 'immunization-form', component: ChildrenimmunizationformComponent },
-    {path: 'prenatal-form', component: PrenatalFormComponent},
-    { path: 'prenatal-edit-form/:id', component: PrenatalEditFormComponent },
-    {path: 'ITR-Form', component: IndividualTreatmentRecordComponent},
-
+    { path: 'Prenatal-Patients', component: PrenatalComponent },
+    { path: 'child-form/:motherId', component: ChildFormComponent },
+    { path: 'immunization-form/:motherId', component: ChildrenimmunizationformComponent },
+    { path: 'prenatal-form/:motherId', component: PrenatalFormComponent },
+    { path: 'prenatal-edit-form/:id/:motherId', component: PrenatalEditFormComponent },
+    { path: 'ITR-Edit-Form/:motherId', component: IndividualTreatmentRecordComponent },
+    { path: 'ITR-Form', component: IndividualTreatmentRecordComponent },
+    { path: 'ITR-Records', component: ItrRecordsComponent },
   ]}
 ];
