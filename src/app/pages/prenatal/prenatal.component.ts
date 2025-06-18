@@ -307,7 +307,7 @@ export class PrenatalComponent implements OnInit, OnDestroy, OnChanges {
 
 
     setTimeout(() => {
-      this.router.navigate(['/HCP/prenatal']).then(() => {
+      this.router.navigate(['/HCP/Prenatal-Patients']).then(() => {
         this.navigating = false; // Reset after navigation completes
       });
     }, 4000);
@@ -322,7 +322,7 @@ export class PrenatalComponent implements OnInit, OnDestroy, OnChanges {
         this.spinnerMessage = "Deleting Patient...";
         this.closeDeleteModal();
         this.selectedMotherId = "";
-        this.router.navigate(['/HCP/prenatal']);
+        this.router.navigate(['/HCP/Prenatal-Patients']);
         this.loadMothers();
       } catch (error) {
         console.error('Error deleting mother:', error);

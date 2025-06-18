@@ -156,4 +156,15 @@ export class AuthService {
     }
     return false;
   }
+
+  async getCurrentUserName(): Promise<string | null> {
+    const uid = await this.getCurrentUserId();
+    if (!uid) return null;
+    const userDocRef = doc(this.firestore, 'users', uid);
+    const docSnap = await getDoc(userDocRef);
+    if (docSnap.exists()) {
+      return docSnap.data()['name'] || null;
+    }
+    return null;
+  }
 }

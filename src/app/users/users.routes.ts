@@ -18,7 +18,7 @@ export const usersRoutes: Routes = [
     { path: '', redirectTo: 'appointments', pathMatch: 'full' },
     { path: 'appointments', component: AppointmentsComponent },
     { path: 'child-immunization', component: ChildrenComponent },
-    { path: 'immunization', component: ImmunizationComponent },
+    { path: 'Immunization-Patients', component: ImmunizationComponent },
     { path: 'Prenatal-Patients', component: PrenatalComponent },
     { path: 'child-form/:motherId', component: ChildFormComponent },
     { path: 'immunization-form', component: ChildrenimmunizationformComponent },

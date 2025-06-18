@@ -1,109 +1,253 @@
-<div class="p-4 bg-white shadow-md rounded-lg mx-auto" style="width: 210mm; min-height: 297mm;">
-  <!-- Header -->
-  <div class="text-center font-bold text-lg mb-4">
+<body class="p-10 font-serif text-sm w-[210mm] min-h-[297mm] mx-auto bg-white" id="print-section">
+  <!-- Back button outside the form -->
+<div class="mb-2">
+  <button
+    type="button"
+    class="px-4 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition font-semibold print:hidden"
+    routerLink="/HCP/Prenatal-Patients"
+  >
+    &#8592; Back
+  </button>
+</div>  <!-- Header -->
+  <div class="text-center font-normal text-lg mb-10 mt-3">
     INDIVIDUAL TREATMENT RECORD FOR IMMUNIZATION AND SICK CHILDREN
   </div>
 
-  <form (ngSubmit)="onSubmit()" #immunizationForm="ngForm">
+  <form #immunizationForm="ngForm" (ngSubmit)="onSubmit(immunizationForm)">
     <!-- Personal Info Section -->
-    <div class="grid grid-cols-3 gap-2 text-xs mb-4">
+    <div class="grid grid-cols-4 gap-2 text-xs mb-4">
       <div class="flex flex-col">
-        <label for="name" class="mb-1 text-gray-700">Name</label>
-        <input id="name" name="name" type="text" class="border p-1" [(ngModel)]="formData.name" required />
+      <label for="name" class="mb-1 text-gray-700">Name</label>
+      <input
+        id="name"
+        name="name"
+        type="text"
+        class="border p-1"
+        [(ngModel)]="formData.name"
+        required
+        #name="ngModel"
+        [ngClass]="{'border-red-500': name.invalid && (name.dirty || name.touched || showFormError)}"
+        [title]="name.invalid && (name.dirty || name.touched || showFormError) ? 'Name is required.' : ''"
+      />
       </div>
       <div class="flex flex-col">
-        <label for="age" class="mb-1 text-gray-700">Age</label>
-        <input id="age" name="age" type="text" class="border p-1" [(ngModel)]="formData.age" required />
+      <div class="flex flex-row items-center gap-2">
+        <div class="flex flex-col" style="width: 60px;">
+          <label for="ageYears" class="mb-1 text-gray-700">Age (Years</label>
+          <input
+        id="ageYears"
+        name="ageYears"
+        type="number"
+        class="border p-1"
+        [(ngModel)]="formData.ageYears"
+        required
+        #ageYears="ngModel"
+        [ngClass]="{'border-red-500': ageYears.invalid && (ageYears.dirty || ageYears.touched)}"
+        [title]="ageYears.invalid && (ageYears.dirty || ageYears.touched) ? 'Age in years is required.' : ''"
+          />
+        </div>
+        <div class="flex flex-col" style="width: 60px;">
+          <label for="ageMonths" class="mb-1 text-gray-700">& Month)</label>
+          <input
+        id="ageMonths"
+        name="ageMonths"
+        type="number"
+        class="border p-1"
+        [(ngModel)]="formData.ageMonths"
+        required
+        #ageMonths="ngModel"
+        [ngClass]="{'border-red-500': ageMonths.invalid && (ageMonths.dirty || ageMonths.touched)}"
+        [title]="ageMonths.invalid && (ageMonths.dirty || ageMonths.touched) ? 'Age in months is required.' : ''"
+          />
+        </div>
+      </div>
       </div>
       <div class="flex flex-col">
-        <label for="birthday" class="mb-1 text-gray-700">Birthday</label>
-        <input id="birthday" name="birthday" type="text" class="border p-1" [(ngModel)]="formData.birthday" required />
+      <label for="birthday" class="mb-1 text-gray-700">Birthday</label>
+      <input
+        id="birthday"
+        name="birthday"
+        type="date"
+        class="border p-1"
+        [(ngModel)]="formData.birthday"
+        required
+        #birthday="ngModel"
+        [ngClass]="{'border-red-500': birthday.invalid && (birthday.dirty || birthday.touched)}"
+        [title]="birthday.invalid && (birthday.dirty || birthday.touched) ? 'Birthday is required.' : ''"
+      />
       </div>
       <div class="flex flex-col">
-        <label for="address" class="mb-1 text-gray-700">Address</label>
-        <input id="address" name="address" type="text" class="border p-1" [(ngModel)]="formData.address" required />
+      <label for="address" class="mb-1 text-gray-700">Address</label>
+      <input
+        id="address"
+        name="address"
+        type="text"
+        class="border p-1"
+        [(ngModel)]="formData.address"
+        required
+        #address="ngModel"
+        [ngClass]="{'border-red-500': address.invalid && (address.dirty || address.touched)}"
+        [title]="address.invalid && (address.dirty || address.touched) ? 'Address is required.' : ''"
+      />
       </div>
       <div class="flex flex-col">
-        <label for="bhw" class="mb-1 text-gray-700">BHW</label>
-        <input id="bhw" name="bhw" type="text" class="border p-1" [(ngModel)]="formData.bhw" required />
+      <label for="bhw" class="mb-1 text-gray-700">BHW</label>
+      <input
+        id="bhw"
+        name="bhw"
+        type="text"
+        class="border p-1"
+        [(ngModel)]="formData.bhw"
+        required
+        #bhw="ngModel"
+        [ngClass]="{'border-red-500': bhw.invalid && (bhw.dirty || bhw.touched)}"
+        [title]="bhw.invalid && (bhw.dirty || bhw.touched) ? 'BHW is required.' : ''"
+        readonly
+      />
       </div>
       <div class="flex flex-col">
-        <label for="philhealth" class="mb-1 text-gray-700">PhilHealth No.</label>
-        <input id="philhealth" name="philhealth" type="text" class="border p-1" [(ngModel)]="formData.philhealth" required />
+      <label for="philhealth" class="mb-1 text-gray-700">PhilHealth No.</label>
+      <input
+        id="philhealth"
+        name="philhealth"
+        type="text"
+        class="border p-1"
+        [(ngModel)]="formData.philhealth"
+        required
+        #philhealth="ngModel"
+        [ngClass]="{'border-red-500': philhealth.invalid && (philhealth.dirty || philhealth.touched)}"
+        [title]="philhealth.invalid && (philhealth.dirty || philhealth.touched) ? 'PhilHealth No. is required.' : ''"
+      />
       </div>
       <div class="flex flex-col">
-        <label for="contact" class="mb-1 text-gray-700">Contact No.</label>
-        <input id="contact" name="contact" type="text" class="border p-1" [(ngModel)]="formData.contact" required />
+      <label for="contact" class="mb-1 text-gray-700">Contact No.</label>
+      <input
+        id="contact"
+        name="contact"
+        type="text"
+        class="border p-1"
+        [(ngModel)]="formData.contact"
+        required
+        pattern="^09[0-9]{9}$"
+        maxlength="11"
+        #contact="ngModel"
+        [ngClass]="{'border-red-500': contact.invalid && (contact.dirty || contact.touched)}"
+        [title]="contact.invalid && (contact.dirty || contact.touched) ? 'Please enter a valid Philippine mobile number (e.g., 09XXXXXXXXX).' : ''"
+      />
       </div>
       <div class="flex flex-col">
-        <label for="mother" class="mb-1 text-gray-700">Mother's Name</label>
-        <input id="mother" name="mother" type="text" class="border p-1" [(ngModel)]="formData.mother" required />
+      <label for="mother" class="mb-1 text-gray-700">Mother's Name</label>
+      <input
+        id="mother"
+        name="mother"
+        type="text"
+        class="border p-1"
+        [(ngModel)]="formData.mother"
+        required
+        #mother="ngModel"
+        [ngClass]="{'border-red-500': mother.invalid && (mother.dirty || mother.touched)}"
+        [title]="mother.invalid && (mother.dirty || mother.touched) ? 'Mother\'s Name is required.' : ''"
+      />
       </div>
       <div class="flex flex-col">
-        <label for="placeofdelivery" class="mb-1 text-gray-700">Place of Delivery</label>
-        <input id="placeofdelivery" name="placeofdelivery" type="text" class="border p-1" [(ngModel)]="formData.placeofdelivery" required />
+      <label for="placeofdelivery" class="mb-1 text-gray-700">Place of Delivery</label>
+      <input
+        id="placeofdelivery"
+        name="placeofdelivery"
+        type="text"
+        class="border p-1"
+        [(ngModel)]="formData.placeofdelivery"
+        required
+        #placeofdelivery="ngModel"
+        [ngClass]="{'border-red-500': placeofdelivery.invalid && (placeofdelivery.dirty || placeofdelivery.touched)}"
+        [title]="placeofdelivery.invalid && (placeofdelivery.dirty || placeofdelivery.touched) ? 'Place of Delivery is required.' : ''"
+      />
       </div>
       <div class="flex flex-col">
-        <label for="weight" class="mb-1 text-gray-700">Weight</label>
-        <input id="weight" name="weight" type="text" class="border p-1" [(ngModel)]="formData.weight" required />
+      <label for="weight" class="mb-1 text-gray-700">Weight</label>
+      <input
+        id="weight"
+        name="weight"
+        type="number"
+        class="border p-1"
+        [(ngModel)]="formData.weight"
+        required
+        #weight="ngModel"
+        [ngClass]="{'border-red-500': weight.invalid && (weight.dirty || weight.touched)}"
+        [title]="weight.invalid && (weight.dirty || weight.touched) ? 'Weight is required.' : ''"
+      />
       </div>
       <div class="flex flex-col">
-        <label for="height" class="mb-1 text-gray-700">Height</label>
-        <input id="height" name="height" type="text" class="border p-1" [(ngModel)]="formData.height" required />
+      <label for="height" class="mb-1 text-gray-700">Height</label>
+      <input
+        id="height"
+        name="height"
+        type="number"
+        class="border p-1"
+        [(ngModel)]="formData.height"
+        required
+        #height="ngModel"
+        [ngClass]="{'border-red-500': height.invalid && (height.dirty || height.touched)}"
+        [title]="height.invalid && (height.dirty || height.touched) ? 'Height is required.' : ''"
+      />
       </div>
     </div>
 
     <!-- Immunization Table -->
-    <div class="border border-gray-700 text-xs">
-      <div *ngFor="let vaccine of vaccines" class="grid grid-cols-4 border-t border-black">
-        <!-- Vaccine Name and Schedule -->
-        <div class="border border-black p-2 font-semibold text-center">
-          {{ vaccine.name }}<br />
-          <span class="font-normal">{{ vaccine.schedule }}</span>
-        </div>
+    <div class="border border-gray-300 text-xs">
+      <div *ngFor="let vaccine of vaccines" class="grid grid-cols-4 border-t border-gray-300">
+      <!-- Vaccine Name and Schedule -->
+      <div class="border border-gray-300 p-2 font-semibold text-center">
+        {{ vaccine.name }}<br />
+        <span class="font-normal">{{ vaccine.schedule }}</span>
+      </div>
 
-        <!-- Generate Slot Inputs -->
-        <div
-          *ngFor="let slot of [].constructor(vaccine.slots); let i = index"
-          class="border border-black p-2 flex flex-col gap-1"
-        >
-          <div class="flex flex-col">
-            <label [for]="vaccine.id + '-date-' + (i + 1)" class="mb-1 text-gray-700">Date</label>
-            <input
-              [id]="vaccine.id + '-date-' + (i + 1)"
-              [name]="vaccine.id + '-date-' + (i + 1)"
-              type="text"
-              class="border px-1 py-0.5"
-            />
-          </div>
-          <div class="flex flex-col">
-            <label [for]="vaccine.id + '-sig-' + (i + 1)" class="mb-1 text-gray-700">Sig</label>
-            <input
-              [id]="vaccine.id + '-sig-' + (i + 1)"
-              [name]="vaccine.id + '-sig-' + (i + 1)"
-              type="text"
-              class="border px-1 py-0.5"
-            />
-          </div>
-          <div class="flex flex-col">
-            <label [for]="vaccine.id + '-remarks-' + (i + 1)" class="mb-1 text-gray-700">Remarks</label>
-            <textarea
-              [id]="vaccine.id + '-remarks-' + (i + 1)"
-              [name]="vaccine.id + '-remarks-' + (i + 1)"
-              class="border px-1 py-0.5"
-            ></textarea>
-          </div>
+      <!-- Generate Slot Inputs -->
+      <div
+        *ngFor="let slot of [].constructor(vaccine.slots); let i = index"
+        class="border border-gray-300 p-2 flex flex-col gap-1"
+      >
+        <div class="flex flex-col">
+        <label [for]="vaccine.id + '-date-' + (i + 1)" class="mb-1 text-gray-700">Date</label>
+        <input
+          [id]="vaccine.id + '-date-' + (i + 1)"
+          [name]="vaccine.id + '-date-' + (i + 1)"
+          type="date"
+          class="border px-1 py-0.5"
+        />
         </div>
+        <div class="flex flex-col">
+        <label [for]="vaccine.id + '-sig-' + (i + 1)" class="mb-1 text-gray-700">Sig</label>
+        <input
+          [id]="vaccine.id + '-sig-' + (i + 1)"
+          [name]="vaccine.id + '-sig-' + (i + 1)"
+          type="text"
+          class="border px-1 py-0.5"
+        />
+        </div>
+        <div class="flex flex-col">
+        <label [for]="vaccine.id + '-remarks-' + (i + 1)" class="mb-1 text-gray-700">Remarks</label>
+        <textarea
+          [id]="vaccine.id + '-remarks-' + (i + 1)"
+          [name]="vaccine.id + '-remarks-' + (i + 1)"
+          class="border px-1 py-0.5"
+        ></textarea>
+        </div>
+      </div>
 
-        <!-- Fill empty cell if less than 3 columns -->
-        <div
-          *ngIf="vaccine.slots < 3"
-          [attr.colspan]="3 - vaccine.slots"
-          class="border border-black p-2"
-        ></div>
+      <!-- Fill empty cell if less than 3 columns -->
+      <div
+        *ngIf="vaccine.slots < 3"
+        [attr.colspan]="3 - vaccine.slots"
+        class="border border-gray-300 p-2"
+      ></div>
       </div>
     </div>
-
+      <div class="flex justify-start items-center mb-1">
+      <span class="text-xs text-gray-600 font-medium">
+        {{ now | date:'fullDate' }} {{ now | date:'shortTime' }}
+      </span>
+    </div>
     <!-- Submit Button -->
     <div class="flex justify-end mt-8">
       <button
@@ -114,7 +258,7 @@
       </button>
     </div>
   </form>
-</div>
+</body>
 
 <style>
 @media print {
@@ -127,6 +271,9 @@
     box-shadow: none !important;
     margin: 0 auto !important;
     border: none !important;
+  }
+  .print\:hidden {
+    display: none !important;
   }
 }
 </style>

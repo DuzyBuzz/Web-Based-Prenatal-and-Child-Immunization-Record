@@ -1,8 +1,10 @@
+import { AuthService } from '../../../auth/auth.service';
 import { SmsService } from './../../../services/sms.service';
 import { CommonModule } from '@angular/common';
-import { Component, NgModule } from '@angular/core';
+import { Component, NgModule, OnInit } from '@angular/core';
 import { Firestore, collection, addDoc } from '@angular/fire/firestore';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-childrenimmunizationform',
@@ -10,16 +12,55 @@ import { FormsModule } from '@angular/forms';
   templateUrl: './childrenimmunizationform.component.html',
   styleUrl: './childrenimmunizationform.component.scss'
 })
-export class ChildrenimmunizationformComponent {
+export class ChildrenimmunizationformComponent implements OnInit {
   formData: any = {}; // Holds all form values
   response = '';
-  constructor(private firestore: Firestore, private smsService: SmsService) {}
+  today = new Date();
+  now: Date | undefined;
+  showFormError = false;
 
-  async onSubmit() {
+  constructor(
+    private firestore: Firestore,
+    private smsService: SmsService,
+    private authService: AuthService, // Inject AuthService
+    private router: Router // Inject Router for navigation
+  ) {
+    this.setBhwName();
+  }
+  ngOnInit(): void {
+    setInterval(() => {
+      this.now = new Date();
+    }, 1000);
+  }
+
+
+  async setBhwName() {
+    const name = await this.authService.getCurrentUserName();
+    if (name) {
+      this.formData.bhw = name;
+    }
+  }
+
+  async onSubmit(form: any) {
+    this.showFormError = false;
+    if (form && form.invalid) {
+      form.control.markAllAsTouched(); // Touch all fields
+      this.showFormError = true;
+      return;
+    }
+
     try {
-      await addDoc(collection(this.firestore, 'immunization'), this.formData);
+      // Add SecondWednesdayNextMonth, createdDate, and name to the record
+      this.formData.SecondWednesdayNextMonth = this.getSecondWednesdayNextMonth();
+      this.formData.createdDate = new Date().toISOString();
+
+      // Optionally, add the name field if not already present
+      // this.formData.name = this.formData.name || '';
+
+      await addDoc(collection(this.firestore, 'children'), this.formData);
 
       // Compose SMS
+      /*
       const name = this.formData.name || 'Parent/Guardian';
       const contact = this.formData.contact;
       const nextImmunization = this.getSecondWednesdayNextMonth();
@@ -35,9 +76,10 @@ export class ChildrenimmunizationformComponent {
           error: (err: { error: any; }) => this.response = `Error: ${JSON.stringify(err.error)}`
         });
       }
+      */
 
       alert('Immunization record saved!');
-      this.formData = {}; // Reset form if desired
+      this.router.navigate(['/HCP/immunization']);
     } catch (error) {
       alert('Error saving record: ' + (error as any).message);
     }
@@ -100,5 +142,9 @@ vaccines = [
       }
     }
     return '';
+  }
+
+  printSection() {
+    window.print();
   }
 }

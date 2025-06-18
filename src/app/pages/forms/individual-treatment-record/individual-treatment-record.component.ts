@@ -3,12 +3,14 @@ import { Component, OnInit } from '@angular/core';
 import { Firestore, doc, getDoc, updateDoc, addDoc, collection } from '@angular/fire/firestore';
 import { FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { SmsService } from '../../../services/sms.service';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../auth/auth.service';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 @Component({
   selector: 'app-individual-treatment-record',
-  imports: [CommonModule, FormsModule, RouterLink, ReactiveFormsModule],
+  imports: [CommonModule, FormsModule, RouterLink, ReactiveFormsModule, RouterLink],
   templateUrl: './individual-treatment-record.component.html',
   styleUrl: './individual-treatment-record.component.scss'
 })
@@ -61,7 +63,8 @@ export class IndividualTreatmentRecordComponent implements OnInit {
     private authService: AuthService,
     private firestore: Firestore,
     private smsService: SmsService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private router: Router
   ) {}
 
   ngOnInit() {
@@ -119,7 +122,8 @@ export class IndividualTreatmentRecordComponent implements OnInit {
       // Add today's date to the record
       const record = {
         ...this.itr,
-        dateSaved: new Date().toISOString()
+        dateSaved: new Date().toISOString(),
+
       };
 
       await addDoc(collection(this.firestore, 'ITR'), record);
@@ -205,12 +209,14 @@ export class IndividualTreatmentRecordComponent implements OnInit {
     const itrWithMeta = {
       ...itr,
       createdBy: uid,
-      nurseName: nurseName // or midwife/incharge
+      nurseName: nurseName, // or midwife/incharge
+      nextPrenatal: this.getSecondTuesdayNextMonth(),
     };
 
     // 4. Save to Firestore
     await addDoc(collection(this.firestore, 'itr'), itrWithMeta);
     this.successMessage = 'Record saved successfully.';
+    this.router.navigate(['/HCP/Prenatal-Patients']);
   }
 
   async updateITR(itr: any) {
@@ -218,5 +224,20 @@ export class IndividualTreatmentRecordComponent implements OnInit {
     const itrDocRef = doc(this.firestore, 'itr', this.itrDocId);
     await updateDoc(itrDocRef, itr);
     this.successMessage = 'Record updated successfully.';
+  }
+
+  async printAsPdfWithName() {
+    const { lastName = '', firstName = '', middleName = '' } = this.itr;
+    const filename = `${lastName}_${firstName}_${middleName}.pdf`.replace(/\s+/g, '_');
+    const data = document.getElementById('print-section');
+    if (data) {
+      const canvas = await html2canvas(data);
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(filename);
+    }
   }
 }
