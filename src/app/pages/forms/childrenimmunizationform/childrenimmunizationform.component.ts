@@ -4,11 +4,11 @@ import { CommonModule } from '@angular/common';
 import { Component, NgModule, OnInit } from '@angular/core';
 import { Firestore, collection, addDoc } from '@angular/fire/firestore';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-childrenimmunizationform',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './childrenimmunizationform.component.html',
   styleUrl: './childrenimmunizationform.component.scss'
 })
@@ -41,6 +41,28 @@ export class ChildrenimmunizationformComponent implements OnInit {
     }
   }
 
+  async printAndSave(form: any) {
+    this.showFormError = false;
+    if (form && form.invalid) {
+      form.control.markAllAsTouched();
+      this.showFormError = true;
+      return;
+    }
+
+    let printed = false;
+    const afterPrintHandler = async () => {
+      if (printed) {
+        await this.onSubmit(form);
+        window.removeEventListener('afterprint', afterPrintHandler);
+      }
+    };
+
+    window.addEventListener('afterprint', afterPrintHandler);
+    printed = true;
+    window.print();
+  }
+
+  // Update your onSubmit to NOT print, just save
   async onSubmit(form: any) {
     this.showFormError = false;
     if (form && form.invalid) {
@@ -50,24 +72,27 @@ export class ChildrenimmunizationformComponent implements OnInit {
     }
 
     try {
-      // Add SecondWednesdayNextMonth, createdDate, and name to the record
+      // Get current user ID and name
+      const uid = await this.authService.getCurrentUserId();
+      const nurseName = await this.authService.getCurrentUserName();
+
+      // Add fields to the record
       this.formData.SecondWednesdayNextMonth = this.getSecondWednesdayNextMonth();
       this.formData.createdDate = new Date().toISOString();
+      this.formData.uid = uid;
+      this.formData.nurseName = nurseName;
 
-      // Optionally, add the name field if not already present
-      // this.formData.name = this.formData.name || '';
-
-      await addDoc(collection(this.firestore, 'children'), this.formData);
+      await addDoc(collection(this.firestore, 'immunization'), this.formData);
 
       // Compose SMS
-      /*
+      
       const name = this.formData.name || 'Parent/Guardian';
       const contact = this.formData.contact;
       const nextImmunization = this.getSecondWednesdayNextMonth();
       const message =
-        `Good day, ${name}! ` +
-        `Your child's next immunization schedule will be on ${nextImmunization}. ` +
-        `You will also receive a reminder on the day of your appointment.`;
+        `Good day ${this.formData.mother}, ` +
+        `Next Immunization for ${this.formData.name} is on ${nextImmunization}. ` +
+        `Expect reminder on the day of your appointment.`;
 
       // Send SMS if contact is provided
       if (contact) {
@@ -76,10 +101,10 @@ export class ChildrenimmunizationformComponent implements OnInit {
           error: (err: { error: any; }) => this.response = `Error: ${JSON.stringify(err.error)}`
         });
       }
-      */
+      
 
       alert('Immunization record saved!');
-      this.router.navigate(['/HCP/immunization']);
+      this.router.navigate(['/HCP/Immunization-Patients']);
     } catch (error) {
       alert('Error saving record: ' + (error as any).message);
     }

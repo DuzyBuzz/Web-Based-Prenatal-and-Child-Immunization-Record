@@ -133,13 +133,13 @@ export class IndividualTreatmentRecordComponent implements OnInit {
       const contact = this.itr.contact;
       const nextPrenatal = this.getSecondTuesdayNextMonth();
       const message =
-        `Good day, ${name}! ` +
-        `Your next prenatal check-up is scheduled on ${nextPrenatal}. ` +
-        `You will also receive a reminder on the day of your appointment. Thank you for prioritizing your health and your baby's well-being.`;
+        `Good day ${name}, ` +
+        `Your Next Prenatal is on ${nextPrenatal}. ` +
+        `Expect reminder on the day of your appointment.`;
 
       // Send SMS if contact is provided
       if (contact) {
-        /*
+        
         this.smsService.sendSms(contact, message).subscribe({
           next: () => {
             this.successMessage = 'Record saved and SMS notification sent successfully.';
@@ -152,7 +152,7 @@ export class IndividualTreatmentRecordComponent implements OnInit {
             window.print(); // Still print even if SMS fails
           }
         });
-        */
+      
         this.successMessage = 'Record saved successfully. SMS notification sending is currently disabled.';
         window.print(); // Print the form after successful save
       } else {

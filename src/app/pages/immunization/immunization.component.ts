@@ -153,7 +153,7 @@ export class ImmunizationComponent {
 
   // Load children from Firestore and populate user details
   loadChildren(): void {
-    const ref = collection(this.firestore, 'children');
+    const ref = collection(this.firestore, 'immunization');
     collectionData(ref, { idField: 'id' }).subscribe((data: any[]) => {
       this.children = data;
       this.loadUserDetailsForChildren();
@@ -253,7 +253,7 @@ export class ImmunizationComponent {
 
 
     setTimeout(() => {
-      this.router.navigate(['/HCP/prenatal']).then(() => {
+      this.router.navigate(['/HCP/Immunization-Patients']).then(() => {
         this.navigating = false; // Reset after navigation completes
       });
     }, 4000);
@@ -262,13 +262,13 @@ export class ImmunizationComponent {
   async deleteChild(): Promise<void> {
     if (this.confirmName === this.selectedChild.name) {
       try {
-        const ref = doc(this.firestore, 'children', this.selectedChild.id);
+        const ref = doc(this.firestore, 'immunization', this.selectedChild.id);
         await deleteDoc(ref);
         this.navigating= true;
         this.spinnerMessage = "Deleting Patient...";
         this.closeDeleteModal();
         this.selectedChildId = "";
-        this.router.navigate(['/HCP/prenatal']);
+        this.router.navigate(['/HCP/Immunization-Patients']);
         this.loadChildren();
       } catch (error) {
         console.error('Error deleting child:', error);

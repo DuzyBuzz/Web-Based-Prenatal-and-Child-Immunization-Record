@@ -1,19 +1,20 @@
-<body class="p-10 font-serif text-sm w-[210mm] min-h-[297mm] mx-auto bg-white" id="print-section">
+<body class="p-10 font-serif text-sm w-[210mm] min-h-[297mm] mx-auto bg-white" >
   <!-- Back button outside the form -->
 <div class="mb-2">
   <button
     type="button"
     class="px-4 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition font-semibold print:hidden"
-    routerLink="/HCP/Prenatal-Patients"
+    routerLink="/HCP/Immunization-Patients"
   >
     &#8592; Back
   </button>
 </div>  <!-- Header -->
-  <div class="text-center font-normal text-lg mb-10 mt-3">
+
+
+  <form #immunizationForm="ngForm" (ngSubmit)="onSubmit(immunizationForm)" id="print-section">
+      <div class="text-center font-normal text-lg mb-10 mt-3">
     INDIVIDUAL TREATMENT RECORD FOR IMMUNIZATION AND SICK CHILDREN
   </div>
-
-  <form #immunizationForm="ngForm" (ngSubmit)="onSubmit(immunizationForm)">
     <!-- Personal Info Section -->
     <div class="grid grid-cols-4 gap-2 text-xs mb-4">
       <div class="flex flex-col">
@@ -251,8 +252,9 @@
     <!-- Submit Button -->
     <div class="flex justify-end mt-8">
       <button
-        type="submit"
+        type="button"
         class="bg-blue-600 text-white px-6 py-2 rounded shadow hover:bg-blue-700 transition"
+        (click)="printAndSave(immunizationForm)"
       >
         Submit
       </button>

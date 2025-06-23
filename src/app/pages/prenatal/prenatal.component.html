@@ -104,9 +104,8 @@
 >
   <strong class="font-bold text-blue-900">Patient Name:</strong>
   {{ mother.firstName }} {{ mother.middleName }} {{ mother.lastName }} <br>
-  <strong class="font-bold text-blue-900">Attendant Name:</strong>
-  {{ mother.nurseName }}
 </p>
+            <p class="text-gray-600 text-sm">Attendant: <span class="font-medium">{{ mother.nurseName || 'N/A' }}</span></p>
 
             <p class="text-gray-600 text-sm">
               TT1:
