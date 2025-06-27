@@ -49,7 +49,13 @@ export class SetupUserComponent implements OnInit {
     // Form setup
     this.obForm = this.fb.group({
       name: ['', Validators.required],
-      contactNumber: ['', Validators.required],
+      contactNumber: [
+        '',
+        [
+          Validators.required,
+          Validators.pattern(/^09\d{9}$/) // Must start with 09 and be 11 digits
+        ]
+      ],
       hospitalName: ['', Validators.required],
       hospitalAddress: ['', Validators.required]
     });
@@ -66,8 +72,17 @@ export class SetupUserComponent implements OnInit {
   async submitForm() {
     if (this.obForm.invalid || !this.uid) return;
 
+    // Convert full name to Camel Case (first letter of each word capitalized)
+    const formValue = { ...this.obForm.value };
+    if (formValue.name) {
+      formValue.name = formValue.name
+        .split(' ')
+        .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(' ');
+    }
+
     const obInfoRef = doc(this.firestore, `users/${this.uid}`);
-    await setDoc(obInfoRef, this.obForm.value, { merge: true }); // 🔁 use merge to avoid overwriting other fields
+    await setDoc(obInfoRef, formValue, { merge: true }); // 🔁 use merge to avoid overwriting other fields
 
     alert('Information submitted successfully!');
     this.obForm.reset();

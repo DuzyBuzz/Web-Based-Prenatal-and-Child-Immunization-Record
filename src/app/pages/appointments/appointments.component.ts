@@ -3,33 +3,52 @@ import { CalendarOptions } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
+import { Firestore, collectionData, collection } from '@angular/fire/firestore';
 
 @Component({
   selector: 'app-appointments',
   standalone: false,
   templateUrl: './appointments.component.html',
-  styleUrls: ['./appointments.component.scss'], // ✅ Fixed: changed styleUrl to styleUrls
+  styleUrls: ['./appointments.component.scss'],
 })
 export class AppointmentsComponent implements OnInit {
   calendarOptions!: CalendarOptions;
 
+  constructor(private firestore: Firestore) {}
+
   ngOnInit() {
     this.calendarOptions = {
-      plugins: [dayGridPlugin, timeGridPlugin],
+      plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
       initialView: 'dayGridMonth',
       headerToolbar: {
       },
       editable: true,
       selectable: true,
-      events: [
-        { title: 'Prenatal Checkup', date: '2025-04-05', color: '#34D399' },
-        { title: '1st Hepatitis B Vaccine', date: '2025-04-10', color: '#F87171' },
-        { title: 'BCG Vaccine', date: '2025-04-15', color: '#60A5FA' },
-        { title: 'Polio Vaccine', date: '2025-04-20', color: '#FBBF24' },
-        { title: 'MMR Vaccine', date: '2025-05-01', color: '#A78BFA' },
-      ],
+      events: [],
       eventClick: this.onEventClick.bind(this),
     };
+
+    // Fetch ITR collection and map to events
+    const itrCollection = collection(this.firestore, 'itr');
+    collectionData(itrCollection, { idField: 'id' }).subscribe((data: any[]) => {
+      this.calendarOptions.events = data.map(itr => {
+        const fullName = `${itr.firstName} ${itr.middleName} ${itr.lastName}`;
+        console.log('Full Name:', fullName, '| Next Prenatal:', itr.nextPrenatal);
+
+        // Convert "July 8, 2025" to "2025-07-08"
+        const dateObj = new Date(itr.nextPrenatal);
+        const yyyy = dateObj.getFullYear();
+        const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+        const dd = String(dateObj.getDate()).padStart(2, '0');
+        const formattedDate = `${yyyy}-${mm}-${dd}`;
+
+        return {
+          title: `${fullName} - Prenatal Checkup`, // Show full name and label
+          date: formattedDate,                  // Make sure this is in YYYY-MM-DD format
+          color: '#34D399',
+        };
+      });
+    });
   }
 
   onEventClick(eventInfo: any) {

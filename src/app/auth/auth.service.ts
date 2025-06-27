@@ -28,10 +28,10 @@ export class AuthService {
         // If logged in with phone, redirect to /patient
         this.router.navigate(['/patient']);
       } else {
-        const isComplete = await this.isProfileComplete(user.uid);
-        if (!isComplete) {
-          this.router.navigate(['/auth/setup-user']);
-        }
+        // const isComplete = await this.isProfileComplete(user.uid);
+        // if (!isComplete) {
+        //   this.router.navigate(['/auth/setup-user']);
+        // }
       }
     });
   }

@@ -12,6 +12,7 @@ import {
   User,
   Auth
 } from '@angular/fire/auth';
+import { collection, getDocs, query, where } from '@angular/fire/firestore';
 
 import { SharedModule } from '../../shared/shared.module';
 import { SpinnnerComponent } from '../../shared/core/spinnner/spinnner.component';
@@ -173,14 +174,31 @@ export class LoginComponent implements OnInit {
   }
 
   // 🎯 Role-based redirection
-  private redirectUser(email: string | null): void {
+  private async redirectUser(email: string | null): Promise<void> {
     if (!email) return;
 
     // Only admins and HCPs use Google login, patients use phone login (handled in verifyOtp)
     if (email === this.authService.getAdminEmail()) {
       this.router.navigate(['/admin']);
-    } else {
-      this.router.navigate(['/HCP']);
+      return;
+    }
+
+    // Check if email exists in HCP collection
+    try {
+      const hcpQuery = query(
+        collection(this.authService['firestore'], 'HCP'),
+        where('email', '==', email)
+      );
+      const hcpSnapshot = await getDocs(hcpQuery);
+
+      if (!hcpSnapshot.empty) {
+        this.router.navigate(['/HCP']);
+      } else {
+        window.alert('Your email is not registered as a Health Care Provider.');
+      }
+    } catch (error) {
+      window.alert('Error checking HCP records: ' + (error as any).message);
+    } finally {
       this.navigating = false;
     }
   }

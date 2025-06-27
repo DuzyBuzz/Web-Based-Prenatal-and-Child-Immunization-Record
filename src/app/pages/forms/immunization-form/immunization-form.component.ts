@@ -1,10 +1,10 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Firestore, collection, addDoc } from '@angular/fire/firestore';
+import { Firestore, collection, addDoc, doc, getDoc } from '@angular/fire/firestore';
 import { SpinnnerComponent } from '../../../shared/core/spinnner/spinnner.component';
 import { BusinessAddressMapComponent } from '../../../shared/core/business-address-map/business-address-map.component';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-immunization-form',
@@ -21,11 +21,13 @@ import { Router } from '@angular/router';
 export class ImmunizationFormComponent {
   immunizationForm: FormGroup;
   isSubmitting = false;
+  childId: string | null = null;
 
   constructor(
     private fb: FormBuilder,
     private firestore: Firestore,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute // Inject ActivatedRoute
   ) {
     // ✅ Initialize the form group with validations
     this.immunizationForm = this.fb.group({
@@ -41,6 +43,23 @@ export class ImmunizationFormComponent {
       motherContact: ['', [Validators.required, Validators.pattern(/^09\d{9}$/)]],
       fatherContact: ['', [Validators.required, Validators.pattern(/^09\d{9}$/)]],
     });
+  }
+
+  async ngOnInit() {
+    console.log(this.childId);
+    // Get childId from route if present
+    this.childId = this.route.snapshot.paramMap.get('id');
+    if (this.childId) {
+      // Fetch data from Firestore
+      const childDocRef = doc(this.firestore, 'children', this.childId);
+      const childSnap = await getDoc(childDocRef);
+      if (childSnap.exists()) {
+        this.immunizationForm.patchValue(childSnap.data());
+      } else {
+        alert('Child record not found.');
+        this.router.navigate(['/HCP/immunization']);
+      }
+    }
   }
 
   // ✅ Check if a field is invalid and touched
@@ -68,7 +87,8 @@ export class ImmunizationFormComponent {
         const childrenCollection = collection(this.firestore, 'children');
         await addDoc(childrenCollection, {
           ...formData,
-          createdAt: new Date()
+          createdAt: new Date(),
+          typeofConsultation: "Immunization",
         });
 
         alert('✅ Immunization record saved successfully!');

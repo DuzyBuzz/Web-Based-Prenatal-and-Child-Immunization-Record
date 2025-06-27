@@ -209,30 +209,36 @@
         class="border border-gray-300 p-2 flex flex-col gap-1"
       >
         <div class="flex flex-col">
-        <label [for]="vaccine.id + '-date-' + (i + 1)" class="mb-1 text-gray-700">Date</label>
-        <input
-          [id]="vaccine.id + '-date-' + (i + 1)"
-          [name]="vaccine.id + '-date-' + (i + 1)"
-          type="date"
-          class="border px-1 py-0.5"
-        />
+          <label [for]="vaccine.id + '-date-' + (i + 1)" class="mb-1 text-gray-700">Date</label>
+          <input
+            [id]="vaccine.id + '-date-' + (i + 1)"
+            [name]="vaccine.id + '-date-' + (i + 1)"
+            type="date"
+            class="border px-1 py-0.5"
+            [(ngModel)]="formData.vaccines[vaccine.id][i].date"
+            [ngModelOptions]="{standalone: true}"
+          />
         </div>
         <div class="flex flex-col">
-        <label [for]="vaccine.id + '-sig-' + (i + 1)" class="mb-1 text-gray-700">Sig</label>
-        <input
-          [id]="vaccine.id + '-sig-' + (i + 1)"
-          [name]="vaccine.id + '-sig-' + (i + 1)"
-          type="text"
-          class="border px-1 py-0.5"
-        />
+          <label [for]="vaccine.id + '-sig-' + (i + 1)" class="mb-1 text-gray-700">Sig</label>
+          <input
+            [id]="vaccine.id + '-sig-' + (i + 1)"
+            [name]="vaccine.id + '-sig-' + (i + 1)"
+            type="text"
+            class="border px-1 py-0.5"
+            [(ngModel)]="formData.vaccines[vaccine.id][i].sig"
+            [ngModelOptions]="{standalone: true}"
+          />
         </div>
         <div class="flex flex-col">
-        <label [for]="vaccine.id + '-remarks-' + (i + 1)" class="mb-1 text-gray-700">Remarks</label>
-        <textarea
-          [id]="vaccine.id + '-remarks-' + (i + 1)"
-          [name]="vaccine.id + '-remarks-' + (i + 1)"
-          class="border px-1 py-0.5"
-        ></textarea>
+          <label [for]="vaccine.id + '-remarks-' + (i + 1)" class="mb-1 text-gray-700">Remarks</label>
+          <textarea
+            [id]="vaccine.id + '-remarks-' + (i + 1)"
+            [name]="vaccine.id + '-remarks-' + (i + 1)"
+            class="border px-1 py-0.5"
+            [(ngModel)]="formData.vaccines[vaccine.id][i].remarks"
+            [ngModelOptions]="{standalone: true}"
+          ></textarea>
         </div>
       </div>
 
@@ -251,13 +257,14 @@
     </div>
     <!-- Submit Button -->
     <div class="flex justify-end mt-8">
-      <button
-        type="button"
-        class="bg-blue-600 text-white px-6 py-2 rounded shadow hover:bg-blue-700 transition"
-        (click)="printAndSave(immunizationForm)"
-      >
-        Submit
-      </button>
+<button
+  type="button"
+  class="px-6 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition font-semibold print:hidden"
+  (click)="printAndSaveOrUpdateITR(immunizationForm)"
+  [disabled]="immunizationForm.invalid"
+>
+  {{ childId ? 'Update & Print' : 'Save & Print' }}
+</button>
     </div>
   </form>
 </body>

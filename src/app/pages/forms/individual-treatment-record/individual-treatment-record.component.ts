@@ -211,6 +211,7 @@ export class IndividualTreatmentRecordComponent implements OnInit {
       createdBy: uid,
       nurseName: nurseName, // or midwife/incharge
       nextPrenatal: this.getSecondTuesdayNextMonth(),
+      typeofConsultation: "Prenatal",
     };
 
     // 4. Save to Firestore

@@ -1,35 +1,37 @@
-<div class="min-h-screen flex items-center justify-center bg-sky-200  bg-cover bg-center px-4 py-12"
-     style="background-image: url('assets/images/auth.png');">
-  <div class="w-full max-w-2xl bg-white/80 backdrop-blur-2xl rounded-2xl shadow-xl p-10 space-y-6">
-    <div class="text-center">
-      <h2 class="text-3xl font-bold text-blue-700">Welcome, Health Care Provider</h2>
-      <p class="text-blue-500 mt-2 text-sm">Please set up your account to proceed.</p>
+<div class="min-h-screen flex items-center justify-center bg-white px-4 py-12">
+  <div class="w-full max-w-2xl bg-white border border-black rounded-none shadow-none p-10 space-y-6 flex flex-col items-center justify-center">
+    <div class="text-center w-full">
+      <h2 class="text-3xl font-bold text-black">Welcome, Health Care Provider</h2>
+      <p class="text-black mt-2 text-sm">Please set up your account to proceed.</p>
     </div>
 
-    <form (ngSubmit)="submitForm()" [formGroup]="obForm" class="space-y-5">
-      <div>
-        <label class="block text-sm font-medium text-blue-600 mb-1">Full Name</label>
+    <form (ngSubmit)="submitForm()" [formGroup]="obForm" class="space-y-5 flex flex-col items-center w-full">
+      <div class="w-full flex flex-col items-center">
+        <label class="block text-sm font-medium text-black mb-1 text-center">Full Name</label>
         <input
           formControlName="name"
           type="text"
           placeholder="Dr. Jane Doe"
-          class="w-full px-4 py-2 rounded-xl border border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white"
+          class="w-64 px-4 py-2 rounded-none border border-black focus:outline-none focus:ring-2 focus:ring-black bg-white text-black text-center"
         />
       </div>
 
-      <div>
-        <label class="block text-sm font-medium text-blue-600 mb-1">Contact Number</label>
+      <div class="w-full flex flex-col items-center">
+        <label class="block text-sm font-medium text-black mb-1 text-center">Contact Number</label>
         <input
           formControlName="contactNumber"
-          type="tel"
-          placeholder="+63 912 345 6789"
-          class="w-full px-4 py-2 rounded-xl border border-green-200 focus:outline-none focus:ring-2 focus:ring-green-400 bg-white"
+          type="number"
+          placeholder="0912 345 6789"
+          class="w-64 px-4 py-2 rounded-none border border-black focus:outline-none focus:ring-2 focus:ring-black bg-white text-black text-center"
         />
+        <div *ngIf="obForm.get('contactNumber')?.invalid && obForm.get('contactNumber')?.touched" class="text-red-600 text-xs mt-1 text-center">
+          Please enter a valid mobile number.
+        </div>
       </div>
       <button
         type="submit"
         [disabled]="obForm.invalid"
-        class="w-full py-3 rounded-xl bg-green-500 hover:bg-green-600 text-white font-semibold transition duration-300 disabled:opacity-50"
+        class="w-64 py-3 rounded-none bg-black hover:bg-gray-800 text-white font-semibold transition duration-300 disabled:opacity-50 mx-auto"
       >
         Submit Information
       </button>

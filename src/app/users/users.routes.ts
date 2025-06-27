@@ -22,7 +22,7 @@ export const usersRoutes: Routes = [
     { path: 'Prenatal-Patients', component: PrenatalComponent },
     { path: 'child-form/:motherId', component: ChildFormComponent },
     { path: 'immunization-form', component: ChildrenimmunizationformComponent },
-    { path: 'immunization-form/:motherId', component: ChildrenimmunizationformComponent },
+    { path: 'immunization-form/:childId', component: ChildrenimmunizationformComponent },
     { path: 'prenatal-form/:motherId', component: PrenatalFormComponent },
     { path: 'prenatal-edit-form/:id/:motherId', component: PrenatalEditFormComponent },
     { path: 'ITR-Edit-Form/:motherId', component: IndividualTreatmentRecordComponent },

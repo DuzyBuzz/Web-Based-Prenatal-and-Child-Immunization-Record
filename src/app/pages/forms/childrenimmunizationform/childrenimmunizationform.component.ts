@@ -2,9 +2,9 @@ import { AuthService } from '../../../auth/auth.service';
 import { SmsService } from './../../../services/sms.service';
 import { CommonModule } from '@angular/common';
 import { Component, NgModule, OnInit } from '@angular/core';
-import { Firestore, collection, addDoc } from '@angular/fire/firestore';
+import { Firestore, collection, addDoc, doc, getDoc, updateDoc } from '@angular/fire/firestore';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-childrenimmunizationform',
@@ -18,19 +18,51 @@ export class ChildrenimmunizationformComponent implements OnInit {
   today = new Date();
   now: Date | undefined;
   showFormError = false;
+  childId: string | null = null;
 
   constructor(
     private firestore: Firestore,
     private smsService: SmsService,
     private authService: AuthService, // Inject AuthService
-    private router: Router // Inject Router for navigation
+    private router: Router, // Inject Router for navigation
+    private route: ActivatedRoute
   ) {
     this.setBhwName();
   }
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
     setInterval(() => {
       this.now = new Date();
     }, 1000);
+
+    // Initialize vaccines structure
+    this.formData.vaccines = this.formData.vaccines || {};
+    for (const vaccine of this.vaccines) {
+      if (!this.formData.vaccines[vaccine.id]) {
+        this.formData.vaccines[vaccine.id] = [];
+        for (let i = 0; i < vaccine.slots; i++) {
+          this.formData.vaccines[vaccine.id][i] = { date: '', sig: '', remarks: '' };
+        }
+      }
+    }
+
+    this.childId = this.route.snapshot.paramMap.get('childId');
+    if (this.childId) {
+      const childDocRef = doc(this.firestore, 'immunization', this.childId);
+      const childSnap = await getDoc(childDocRef);
+      if (childSnap.exists()) {
+        this.formData = { ...this.formData, ...childSnap.data() };
+        // Re-initialize vaccines if missing
+        this.formData.vaccines = this.formData.vaccines || {};
+        for (const vaccine of this.vaccines) {
+          if (!this.formData.vaccines[vaccine.id]) {
+            this.formData.vaccines[vaccine.id] = [];
+            for (let i = 0; i < vaccine.slots; i++) {
+              this.formData.vaccines[vaccine.id][i] = { date: '', sig: '', remarks: '' };
+            }
+          }
+        }
+      }
+    }
   }
 
 
@@ -41,7 +73,7 @@ export class ChildrenimmunizationformComponent implements OnInit {
     }
   }
 
-  async printAndSave(form: any) {
+  async printAndSaveOrUpdateITR(form?: any) {
     this.showFormError = false;
     if (form && form.invalid) {
       form.control.markAllAsTouched();
@@ -52,7 +84,11 @@ export class ChildrenimmunizationformComponent implements OnInit {
     let printed = false;
     const afterPrintHandler = async () => {
       if (printed) {
-        await this.onSubmit(form);
+        if (this.childId) {
+          await this.updateImmunization(this.childId, this.formData);
+        } else {
+          await this.saveImmunization(this.formData);
+        }
         window.removeEventListener('afterprint', afterPrintHandler);
       }
     };
@@ -108,6 +144,21 @@ export class ChildrenimmunizationformComponent implements OnInit {
     } catch (error) {
       alert('Error saving record: ' + (error as any).message);
     }
+  }
+
+  private async saveImmunization(data: any) {
+    // Add your save logic here (addDoc)
+    await addDoc(collection(this.firestore, 'immunization'), data);
+    alert('Immunization record saved!');
+    this.router.navigate(['/HCP/Immunization-Patients']);
+  }
+
+  private async updateImmunization(id: string, data: any) {
+    // Add your update logic here (updateDoc)
+    const docRef = doc(this.firestore, 'immunization', id);
+    await updateDoc(docRef, data);
+    alert('Immunization record updated!');
+    this.router.navigate(['/HCP/Immunization-Patients']);
   }
 
   // Define your vaccines
