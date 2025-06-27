@@ -204,7 +204,7 @@ export class ImmunizationComponent {
 
     if (this.searchAttendantTerm.trim()) {
       filtered = filtered.filter(child =>
-        child.attendantName?.toLowerCase().includes(this.searchAttendantTerm.toLowerCase())
+        child.nurseName?.toLowerCase().includes(this.searchAttendantTerm.toLowerCase())
       );
     }
 
