@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { environment } from '../../../environments/environment.development'; // Adjust the path as necessary
 import { AuthService } from '../../auth/auth.service';
@@ -12,6 +12,7 @@ import { User } from '@angular/fire/auth';
   styleUrl: './left-side-panel.component.scss'
 })
 export class LeftSidePanelComponent {
+  @Input() blur = false;
   mobileMenuOpen = false;
     user$: Observable<User | null>; // Observable for user state
 

@@ -11,6 +11,7 @@ import { ImmunizationFormComponent } from '../pages/forms/immunization-form/immu
 import { ChildrenimmunizationformComponent } from '../pages/forms/childrenimmunizationform/childrenimmunizationform.component';
 import { IndividualTreatmentRecordComponent } from '../pages/forms/individual-treatment-record/individual-treatment-record.component';
 import { ItrRecordsComponent } from '../pages/prenatal/itr-records/itr-records.component';
+import { SettingsComponent } from '../pages/settings/settings.component';
 
 
 export const usersRoutes: Routes = [
@@ -28,5 +29,6 @@ export const usersRoutes: Routes = [
     { path: 'ITR-Edit-Form/:motherId', component: IndividualTreatmentRecordComponent },
     { path: 'ITR-Form', component: IndividualTreatmentRecordComponent },
     { path: 'ITR-Records', component: ItrRecordsComponent },
+    { path: 'Settings', component: SettingsComponent },
   ]}
 ];

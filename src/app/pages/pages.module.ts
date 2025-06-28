@@ -15,6 +15,7 @@ import { PrenatalEditFormComponent } from "./forms/prenatal-edit-form/prenatal-e
 import { SpinnnerComponent } from '../shared/core/spinnner/spinnner.component';
 import { SharedModule } from '../shared/shared.module';
 import { ImmunizationComponent } from './immunization/immunization.component';
+import { LeftSidePanelComponent } from '../shared/left-side-panel/left-side-panel.component';
 
 
 @NgModule({
@@ -37,7 +38,8 @@ import { ImmunizationComponent } from './immunization/immunization.component';
     NgxChartsModule,
     MothersPregnancyRecordComponent,
     PrenatalEditFormComponent,
-    SpinnnerComponent
+    SpinnnerComponent,
+    SharedModule
 ],
   exports: [
     DashboardComponent,
