@@ -13,6 +13,10 @@ import { Firestore, collectionData, collection } from '@angular/fire/firestore';
 })
 export class AppointmentsComponent implements OnInit {
   calendarOptions!: CalendarOptions;
+  showModal = false;
+  selectedDate: Date | null = null;
+  selectedEvents: any[] = [];
+  allEvents: any[] = [];
 
   constructor(private firestore: Firestore) {}
 
@@ -20,38 +24,70 @@ export class AppointmentsComponent implements OnInit {
     this.calendarOptions = {
       plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
       initialView: 'dayGridMonth',
-      headerToolbar: {
-      },
+      headerToolbar: {},
       editable: true,
       selectable: true,
       events: [],
+      dateClick: this.onDateClick.bind(this), // <-- Add this
       eventClick: this.onEventClick.bind(this),
     };
 
-    // Fetch ITR collection and map to events
+    // Fetch and combine events as before, but store in this.allEvents
     const itrCollection = collection(this.firestore, 'itr');
     collectionData(itrCollection, { idField: 'id' }).subscribe((data: any[]) => {
-      this.calendarOptions.events = data.map(itr => {
+      const itrEvents = data.map(itr => {
         const fullName = `${itr.firstName} ${itr.middleName} ${itr.lastName}`;
-        console.log('Full Name:', fullName, '| Next Prenatal:', itr.nextPrenatal);
-
-        // Convert "July 8, 2025" to "2025-07-08"
         const dateObj = new Date(itr.nextPrenatal);
         const yyyy = dateObj.getFullYear();
         const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
         const dd = String(dateObj.getDate()).padStart(2, '0');
         const formattedDate = `${yyyy}-${mm}-${dd}`;
-
         return {
-          title: `${fullName} - Prenatal Checkup`, // Show full name and label
-          date: formattedDate,                  // Make sure this is in YYYY-MM-DD format
+          title: `${fullName} - Prenatal Checkup`,
+          date: formattedDate,
           color: '#34D399',
         };
       });
+      this.allEvents = [...this.allEvents, ...itrEvents];
+      this.calendarOptions.events = [...this.allEvents];
+    });
+
+    const immunizationCollection = collection(this.firestore, 'immunization');
+    collectionData(immunizationCollection, { idField: 'id' }).subscribe((data: any[]) => {
+      const immunizationEvents = data.map(itr => {
+        const fullName = `${itr.name}`;
+        const dateObj = new Date(itr.SecondWednesdayNextMonth);
+        const yyyy = dateObj.getFullYear();
+        const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+        const dd = String(dateObj.getDate()).padStart(2, '0');
+        const formattedDate = `${yyyy}-${mm}-${dd}`;
+        return {
+          title: `${fullName} - Immunization`,
+          date: formattedDate,
+          color: '#1E90FF',
+        };
+      });
+      this.allEvents = [...this.allEvents, ...immunizationEvents];
+      this.calendarOptions.events = [...this.allEvents];
     });
   }
 
+  onDateClick(arg: any) {
+    const clickedDate = arg.dateStr; // 'YYYY-MM-DD'
+    this.selectedDate = new Date(clickedDate);
+    this.selectedEvents = this.allEvents.filter(
+      event => event.date === clickedDate
+    );
+    this.showModal = true;
+  }
+
+  closeModal() {
+    this.showModal = false;
+    this.selectedDate = null;
+    this.selectedEvents = [];
+  }
+
   onEventClick(eventInfo: any) {
-    alert(`Appointment: ${eventInfo.event.title}\nDate: ${eventInfo.event.start.toISOString().split('T')[0]}`);
+    // Optional: keep your existing event click logic
   }
 }

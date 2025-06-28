@@ -1,11 +1,56 @@
-<div class="flex flex-col flex-grow   items-center min-h-screen px-4">
+<div class="flex flex-col flex-grow items-center min-h-screen px-4 cursor-pointer">
   <div class="p-6 bg-white rounded-lg shadow-lg w-full max-w-7xl">
     <h2 class="text-4xl md:text-6xl font-bold text-teal-600 mb-4 text-center">
       Immunization & Prenatal Schedule
     </h2>
+
+    <!-- Legend Start -->
+    <div class="flex justify-center gap-8 mb-6">
+      <div class="flex items-center gap-2">
+        <span class="inline-block w-5 h-5 rounded bg-[#1E90FF] border border-gray-300"></span>
+        <span class="text-gray-700 font-medium">Immunization</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="inline-block w-5 h-5 rounded bg-[#34D399] border border-gray-300"></span>
+        <span class="text-gray-700 font-medium">Prenatal Checkup</span>
+      </div>
+    </div>
+    <!-- Legend End -->
+
     <full-calendar
       [options]="calendarOptions"
       class="w-full h-[400px] md:h-[700px]"
     ></full-calendar>
+
+    <!-- Appointments Modal -->
+    <div
+      *ngIf="showModal"
+      class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50"
+    >
+      <div class="bg-white rounded-lg shadow-xl p-8 w-full max-w-lg relative">
+        <button
+          (click)="closeModal()"
+          class="absolute top-3 right-3 text-gray-400 hover:text-gray-700 text-2xl font-bold"
+          aria-label="Close"
+        >&times;</button>
+        <h3 class="text-2xl font-bold text-teal-700 mb-4 text-center">
+          Appointments on {{ selectedDate | date: 'longDate' }}
+        </h3>
+        <div *ngIf="selectedEvents.length > 0; else noEvents">
+          <ul class="divide-y divide-gray-200">
+            <li *ngFor="let event of selectedEvents" class="py-3 flex items-center gap-3">
+              <span
+                class="inline-block w-4 h-4 rounded-full"
+                [ngStyle]="{ 'background-color': event.color }"
+              ></span>
+              <span class="font-medium text-gray-800">{{ event.title }}</span>
+            </li>
+          </ul>
+        </div>
+        <ng-template #noEvents>
+          <div class="text-center text-gray-500 py-6">No appointments on this day.</div>
+        </ng-template>
+      </div>
+    </div>
   </div>
 </div>

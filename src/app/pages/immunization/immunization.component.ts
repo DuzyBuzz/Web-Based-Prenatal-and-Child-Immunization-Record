@@ -14,9 +14,10 @@ import { Router } from '@angular/router';
 export class ImmunizationComponent {
   isModalOpen: boolean = false; // Flag to control modal visibility
   children: any[] = [];
-  searchHospitalTerm: string = '';
+  search: string = '';
   searchAttendantTerm: string = '';
   searchPatientTerm: string = '';
+  searchMotherTerm: string = '';
   filterByOwn: boolean = false;
   showContextMenu = false;
   showDeleteModal = false;
@@ -196,9 +197,9 @@ export class ImmunizationComponent {
     }
 
     // Filter based on search terms if provided
-    if (this.searchHospitalTerm.trim()) {
+    if (this.searchMotherTerm.trim()) {
       filtered = filtered.filter(child =>
-        child.hospitalName?.toLowerCase().includes(this.searchHospitalTerm.toLowerCase())
+        child.mother?.toLowerCase().includes(this.searchMotherTerm.toLowerCase())
       );
     }
 

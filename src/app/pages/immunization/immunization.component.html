@@ -59,6 +59,16 @@
           class="w-full p-2 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-400 transition-all duration-300 ease-in-out"
         />
       </div>
+            <!-- Search Mother -->
+      <div *ngIf="!isSidebarHidden" class="flex-1 min-w-[250px]">
+        <label class="block text-sm font-semibold text-blue-600 mb-1">Search Mother</label>
+        <input
+          [(ngModel)]="searchMotherTerm"
+          type="text"
+          placeholder="Search by Mother name"
+          class="w-full p-2 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-400 transition-all duration-300 ease-in-out"
+        />
+      </div>
     </div>
 
     <!-- Header & Add Button -->
