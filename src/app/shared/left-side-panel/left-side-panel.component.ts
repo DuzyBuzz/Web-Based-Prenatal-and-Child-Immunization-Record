@@ -58,6 +58,8 @@ const url = 'http://127.0.0.1:5001/prenatal-and-immunization/us-central1/sendSms
 
 
     logout() {
+  if (confirm('Are you sure you want to sign out?')) {
     this.authService.logout();
   }
+}
 }

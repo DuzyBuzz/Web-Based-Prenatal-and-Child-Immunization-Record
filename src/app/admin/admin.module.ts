@@ -5,15 +5,17 @@ import { AdminDashboardComponent } from './pages/admin-dashboard/admin-dashboard
 import { AdminSidebarComponent } from './pages/admin-sidebar/admin-sidebar.component';
 import { RouterModule } from '@angular/router';
 
-
-
 @NgModule({
-  declarations: [AdminComponent],
+  declarations: [
+    AdminComponent,
+    AdminDashboardComponent,
+    AdminSidebarComponent
+  ],
   imports: [
     CommonModule,
+    RouterModule,
     AdminDashboardComponent,
-    AdminSidebarComponent,
-    RouterModule
+    AdminSidebarComponent
   ]
 })
 export class AdminModule { }

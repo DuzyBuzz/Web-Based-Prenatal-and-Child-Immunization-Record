@@ -88,6 +88,11 @@ export class AppointmentsComponent implements OnInit {
   }
 
   onEventClick(eventInfo: any) {
-    // Optional: keep your existing event click logic
+    const clickedDate = eventInfo.event.startStr; // 'YYYY-MM-DD'
+    this.selectedDate = new Date(clickedDate);
+    this.selectedEvents = this.allEvents.filter(
+      event => event.date === clickedDate
+    );
+    this.showModal = true;
   }
 }

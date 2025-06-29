@@ -12,6 +12,9 @@ import { ChildrenimmunizationformComponent } from '../pages/forms/childrenimmuni
 import { IndividualTreatmentRecordComponent } from '../pages/forms/individual-treatment-record/individual-treatment-record.component';
 import { ItrRecordsComponent } from '../pages/prenatal/itr-records/itr-records.component';
 import { SettingsComponent } from '../pages/settings/settings.component';
+import { IndividualTreatmentRecordPrintOnlyComponent } from '../pages/forms/individual-treatment-record-print-only/individual-treatment-record-print-only.component';
+import { ChildrenimmunizationformPrintOnlyComponent } from '../pages/forms/childrenimmunizationform-print-only/childrenimmunizationform-print-only.component';
+import { ReportsComponent } from '../pages/reports/reports.component';
 
 
 export const usersRoutes: Routes = [
@@ -30,5 +33,8 @@ export const usersRoutes: Routes = [
     { path: 'ITR-Form', component: IndividualTreatmentRecordComponent },
     { path: 'ITR-Records', component: ItrRecordsComponent },
     { path: 'Settings', component: SettingsComponent },
-  ]}
+    { path: 'ITR-Print-Form/:motherId', component: IndividualTreatmentRecordPrintOnlyComponent },
+    { path: 'Immunization-Print-Form/:childId', component: ChildrenimmunizationformPrintOnlyComponent },
+    { path: 'Reports', component: ReportsComponent }
+  ] }
 ];

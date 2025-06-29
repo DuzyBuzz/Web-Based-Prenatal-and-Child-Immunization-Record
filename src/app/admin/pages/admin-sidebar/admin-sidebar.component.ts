@@ -3,7 +3,7 @@ import { AuthService } from '../../../auth/auth.service';
 
 @Component({
   selector: 'app-admin-sidebar',
-  imports: [],
+  standalone: false,
   templateUrl: './admin-sidebar.component.html',
   styleUrl: './admin-sidebar.component.scss'
 })
