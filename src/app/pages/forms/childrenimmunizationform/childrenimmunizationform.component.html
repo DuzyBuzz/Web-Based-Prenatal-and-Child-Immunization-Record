@@ -36,29 +36,29 @@
         <div class="flex flex-col" style="width: 60px;">
           <label for="ageYears" class="mb-1 text-gray-700">Age (Years</label>
           <input
-        id="ageYears"
-        name="ageYears"
-        type="number"
-        class="border p-1"
-        [(ngModel)]="formData.ageYears"
-        required
-        #ageYears="ngModel"
-        [ngClass]="{'border-red-500': ageYears.invalid && (ageYears.dirty || ageYears.touched)}"
-        [title]="ageYears.invalid && (ageYears.dirty || ageYears.touched) ? 'Age in years is required.' : ''"
+            id="ageYears"
+            name="ageYears"
+            type="number"
+            class="border p-1"
+            [(ngModel)]="formData.ageYears"
+            readonly
+            #ageYears="ngModel"
+            [ngClass]="{'border-red-500': ageYears.invalid && (ageYears.dirty || ageYears.touched || showFormError)}"
+            [title]="ageYears.invalid && (ageYears.dirty || ageYears.touched) ? 'Age in years is required.' : ''"
           />
         </div>
         <div class="flex flex-col" style="width: 60px;">
           <label for="ageMonths" class="mb-1 text-gray-700">& Month)</label>
           <input
-        id="ageMonths"
-        name="ageMonths"
-        type="number"
-        class="border p-1"
-        [(ngModel)]="formData.ageMonths"
-        required
-        #ageMonths="ngModel"
-        [ngClass]="{'border-red-500': ageMonths.invalid && (ageMonths.dirty || ageMonths.touched)}"
-        [title]="ageMonths.invalid && (ageMonths.dirty || ageMonths.touched) ? 'Age in months is required.' : ''"
+            id="ageMonths"
+            name="ageMonths"
+            type="number"
+            class="border p-1"
+            [(ngModel)]="formData.ageMonths"
+            readonly
+            #ageMonths="ngModel"
+            [ngClass]="{'border-red-500': ageMonths.invalid && (ageMonths.dirty || ageMonths.touched || showFormError)}"
+            [title]="ageMonths.invalid && (ageMonths.dirty || ageMonths.touched) ? 'Age in months is required.' : ''"
           />
         </div>
       </div>
@@ -73,7 +73,8 @@
         [(ngModel)]="formData.birthday"
         required
         #birthday="ngModel"
-        [ngClass]="{'border-red-500': birthday.invalid && (birthday.dirty || birthday.touched)}"
+        (change)="calculateAgeFromBirthday()"
+        [ngClass]="{'border-red-500': birthday.invalid && (birthday.dirty || birthday.touched || showFormError)}"
         [title]="birthday.invalid && (birthday.dirty || birthday.touched) ? 'Birthday is required.' : ''"
       />
       </div>
@@ -87,7 +88,7 @@
         [(ngModel)]="formData.address"
         required
         #address="ngModel"
-        [ngClass]="{'border-red-500': address.invalid && (address.dirty || address.touched)}"
+        [ngClass]="{'border-red-500': address.invalid && (address.dirty || address.touched || showFormError)}"
         [title]="address.invalid && (address.dirty || address.touched) ? 'Address is required.' : ''"
       />
       </div>
@@ -101,8 +102,8 @@
         [(ngModel)]="formData.bhw"
         required
         #bhw="ngModel"
-        [ngClass]="{'border-red-500': bhw.invalid && (bhw.dirty || bhw.touched)}"
-        [title]="bhw.invalid && (bhw.dirty || bhw.touched) ? 'BHW is required.' : ''"
+        [ngClass]="{'border-red-500': bhw.invalid && (bhw.dirty || bhw.touched || showFormError)}"
+        [title]="bhw.invalid && (bhw.dirty || bhw.touched) ? 'You have just refreshed the form.\nBHW is required.\nIf this field is not populated, \nplease return to the previous page \nand revisit this form to refresh your session.' : ''"
         readonly
       />
       </div>
@@ -116,7 +117,7 @@
         [(ngModel)]="formData.philhealth"
         required
         #philhealth="ngModel"
-        [ngClass]="{'border-red-500': philhealth.invalid && (philhealth.dirty || philhealth.touched)}"
+        [ngClass]="{'border-red-500': philhealth.invalid && (philhealth.dirty || philhealth.touched )}"
         [title]="philhealth.invalid && (philhealth.dirty || philhealth.touched) ? 'PhilHealth No. is required.' : ''"
       />
       </div>
@@ -132,7 +133,7 @@
         pattern="^09[0-9]{9}$"
         maxlength="11"
         #contact="ngModel"
-        [ngClass]="{'border-red-500': contact.invalid && (contact.dirty || contact.touched)}"
+        [ngClass]="{'border-red-500': contact.invalid && (contact.dirty || contact.touched || showFormError)}"
         [title]="contact.invalid && (contact.dirty || contact.touched) ? 'Please enter a valid Philippine mobile number (e.g., 09XXXXXXXXX).' : ''"
       />
       </div>
@@ -146,7 +147,7 @@
         [(ngModel)]="formData.mother"
         required
         #mother="ngModel"
-        [ngClass]="{'border-red-500': mother.invalid && (mother.dirty || mother.touched)}"
+        [ngClass]="{'border-red-500': mother.invalid && (mother.dirty || mother.touched || showFormError)}"
         [title]="mother.invalid && (mother.dirty || mother.touched) ? 'Mother\'s Name is required.' : ''"
       />
       </div>
@@ -160,7 +161,7 @@
         [(ngModel)]="formData.placeofdelivery"
         required
         #placeofdelivery="ngModel"
-        [ngClass]="{'border-red-500': placeofdelivery.invalid && (placeofdelivery.dirty || placeofdelivery.touched)}"
+        [ngClass]="{'border-red-500': placeofdelivery.invalid && (placeofdelivery.dirty || placeofdelivery.touched || showFormError)}"
         [title]="placeofdelivery.invalid && (placeofdelivery.dirty || placeofdelivery.touched) ? 'Place of Delivery is required.' : ''"
       />
       </div>
@@ -174,7 +175,7 @@
         [(ngModel)]="formData.weight"
         required
         #weight="ngModel"
-        [ngClass]="{'border-red-500': weight.invalid && (weight.dirty || weight.touched)}"
+        [ngClass]="{'border-red-500': weight.invalid && (weight.dirty || weight.touched || showFormError)}"
         [title]="weight.invalid && (weight.dirty || weight.touched) ? 'Weight is required.' : ''"
       />
       </div>
@@ -188,7 +189,7 @@
         [(ngModel)]="formData.height"
         required
         #height="ngModel"
-        [ngClass]="{'border-red-500': height.invalid && (height.dirty || height.touched)}"
+        [ngClass]="{'border-red-500': height.invalid && (height.dirty || height.touched || showFormError)}"
         [title]="height.invalid && (height.dirty || height.touched) ? 'Height is required.' : ''"
       />
       </div>
@@ -259,7 +260,7 @@
     <div class="flex justify-end mt-8">
 <button
   type="button"
-  class="px-6 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition font-semibold print:hidden"
+  class="px-6 py-2 bg-blue-600 cursor-pointer text-white rounded-lg shadow hover:bg-blue-700 transition font-semibold print:hidden"
   (click)="printAndSaveOrUpdateITR(immunizationForm)"
   [disabled]="immunizationForm.invalid"
 >
@@ -267,6 +268,54 @@
 </button>
     </div>
   </form>
+  <!-- Modal -->
+<div *ngIf="showModal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+  <div class="bg-white rounded-lg shadow-lg p-8 flex flex-col items-center gap-4 min-w-[320px] border-2"
+       [ngClass]="{
+         'border-green-500': modalType === 'success',
+         'border-yellow-500': modalType === 'warning',
+         'border-red-500': modalType === 'error',
+         'border-blue-500': modalType === 'info'
+       }">
+    <div *ngIf="modalType === 'success'" class="text-green-600 text-4xl mb-2">&#10003;</div>
+    <div *ngIf="modalType === 'error'" class="text-red-600 text-4xl mb-2">&#10060;</div>
+    <div *ngIf="modalType === 'warning'" class="text-yellow-600 text-4xl mb-2">&#9888;</div>
+    <div *ngIf="modalType === 'info'" class="text-blue-600 text-4xl mb-2">&#8505;</div>
+    <div class="text-lg font-semibold text-center"
+         [ngClass]="{
+           'text-green-700': modalType === 'success',
+           'text-yellow-700': modalType === 'warning',
+           'text-red-700': modalType === 'error',
+           'text-blue-700': modalType === 'info'
+         }">
+      {{ modalMessage }}
+    </div>
+    <div class="text-xs text-gray-500 text-center">Redirecting...</div>
+  </div>
+</div>
+<!-- Spinner Overlay -->
+<div *ngIf="isLoading || message"
+     class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+  <div class="bg-white rounded-lg shadow-lg p-6 flex flex-col items-center gap-4 min-w-[300px]">
+    <div *ngIf="isLoading" class="flex flex-col items-center gap-2">
+      <svg class="animate-spin h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+      </svg>
+      <span class="text-blue-700 font-semibold">Processing...</span>
+    </div>
+    <div *ngIf="message"
+         [ngClass]="{
+           'text-green-700': messageType === 'success',
+           'text-yellow-700': messageType === 'warning',
+           'text-red-700': messageType === 'error',
+           'text-blue-700': messageType === 'info'
+         }"
+         class="text-center font-medium">
+      {{ message }}
+    </div>
+  </div>
+</div>
 </body>
 
 <style>

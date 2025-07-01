@@ -11,9 +11,6 @@
 </div>
 
   <form (ngSubmit)="onSubmit(itrForm)" #itrForm="ngForm" >
-  <div *ngIf="showFormError" class="text-red-700 font-semibold mb-2">
-    Please fill up all required fields.
-  </div>
 
     <div class="text-center leading-tight mb-4">
       <p class="font-semibold">REPUBLIC OF THE PHILIPPINES</p>
@@ -38,8 +35,9 @@
   #lastName="ngModel"
   class="border-b w-[180px] ml-3"
   [ngClass]="{
+    'border-red-500': lastName.invalid && (lastName.dirty || lastName.touched || showFormError),
     'border-black': !(lastName.invalid && (lastName.dirty || lastName.touched || showFormError)),
-    'border-red-500': lastName.invalid && (lastName.dirty || lastName.touched || showFormError)
+
   }"
   [title]="lastName.invalid && (lastName.dirty || lastName.touched || showFormError) ? 'Last Name is required.' : ''"
 />
@@ -88,7 +86,7 @@
   #age="ngModel"
   min="0"
   class="border-b w-[50px] ml-1 text-center"
-  required
+  readonly
   [ngClass]="{
     'border-black': !(age.invalid && (age.dirty || age.touched || showFormError) || itr.age < 5),
     'border-red-500': age.invalid || itr.age < 5
@@ -192,13 +190,16 @@
         </select>
 
         <span class="ml-2">Date of Birth:</span>
-        <input type="date" name="dob" [(ngModel)]="itr.dob" #dob="ngModel" class="border-b w-[100px] ml-1" required
-          [ngClass]="{
-            'border-black': !(dob.invalid && (dob.dirty || dob.touched || showFormError)),
-            'border-red-500': dob.invalid && (dob.dirty || dob.touched || showFormError)
-          }"
-          [title]="dob.invalid && (dob.dirty || dob.touched || showFormError) ? 'Date of Birth is required.' : ''"
-        />
+        <!-- Date of Birth input (with age calculation on change) -->
+<input type="date" name="dob" [(ngModel)]="itr.dob" #dob="ngModel" class="border-b w-[100px] ml-1" required
+  (change)="calculateAgeFromDob()"
+  [ngClass]="{
+    'border-black': !(dob.invalid && (dob.dirty || dob.touched || showFormError)),
+    'border-red-500': dob.invalid && (dob.dirty || dob.touched || showFormError)
+  }"
+  [title]="dob.invalid && (dob.dirty || dob.touched || showFormError) ? 'Date of Birth is required.' : ''"
+/>
+
 
         <!-- Zip Code -->
                  <span class="ml-2">Zip Code:</span>
@@ -390,12 +391,17 @@
           [title]="diagnosis.invalid && (diagnosis.dirty || diagnosis.touched || showFormError) ? 'Diagnosis is required.' : ''"
         ></textarea>
       </div>
-
+      <div class="flex justify-start items-center mb-1">
+      <span class="text-xs text-gray-600 font-medium">
+        {{ now | date:'fullDate' }} {{ now | date:'shortTime' }}
+      </span>
+    </div>
       <div class="mt-6 flex justify-end mb-5">
+        
         <!-- Disable the button if the form is invalid (none or not all required fields are filled) -->
 <button
   type="button"
-  class="px-6 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition font-semibold print:hidden"
+  class="px-6 py-2 bg-blue-600 cursor-pointer text-white rounded-lg shadow hover:bg-blue-700 transition font-semibold print:hidden"
   (click)="printAndSaveOrUpdateITR(itrForm)"
   [disabled]="itrForm.invalid"
 >
@@ -403,10 +409,29 @@
 </button>
       </div>
     </div>
-      <div class="flex justify-start items-center mb-1">
-      <span class="text-xs text-gray-600 font-medium">
-        {{ now | date:'fullDate' }} {{ now | date:'shortTime' }}
-      </span>
-    </div>
+
   </form>
+
+  <!-- Modal -->
+<div *ngIf="showModal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 print:hidden">
+  <div class="bg-white rounded-lg shadow-lg p-8 flex flex-col items-center gap-4 min-w-[320px] border-2"
+       [ngClass]="{
+         'border-green-500': modalType === 'success',
+         'border-yellow-500': modalType === 'warning',
+         'border-red-500': modalType === 'error'
+       }">
+    <div *ngIf="modalType === 'success'" class="text-green-600 text-4xl mb-2">&#10003;</div>
+    <div *ngIf="modalType === 'error'" class="text-red-600 text-4xl mb-2">&#10060;</div>
+    <div *ngIf="modalType === 'warning'" class="text-yellow-600 text-4xl mb-2">&#9888;</div>
+    <div class="text-lg font-semibold text-center"
+         [ngClass]="{
+           'text-green-700': modalType === 'success',
+           'text-yellow-700': modalType === 'warning',
+           'text-red-700': modalType === 'error'
+         }">
+      {{ modalMessage }}
+    </div>
+    <div class="text-xs text-gray-500 text-center">Redirecting...</div>
+  </div>
+</div>
 </body>

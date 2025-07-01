@@ -146,8 +146,13 @@
 
           <!-- No Permission message -->
           <ng-template #noPermission>
-            <span class="cursor-pointer px-3 py-1 text-sm font-medium text-red-500 border border-red-300 rounded hover:bg-red-100 transition-all duration-300 ease-in-out">
-              You cannot edit or delete this record.
+            <span class="relative group cursor-pointer flex items-center">
+              <span class="material-icons text-red-500 text-2xl">block</span>
+              <span
+                class="absolute right-full top-1/2 -translate-y-1/2 ml-2 px-3 py-2 bg-white text-red-500 text-xs rounded shadow-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-200 whitespace-nowrap z-10"
+              >
+                You cannot edit or delete this record.
+              </span>
             </span>
           </ng-template>
 

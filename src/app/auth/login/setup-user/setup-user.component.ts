@@ -10,7 +10,7 @@ import { BusinessAddressMapComponent } from '../../../shared/core/business-addre
 @Component({
   selector: 'app-setup-user',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, BusinessAddressMapComponent],
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './setup-user.component.html',
   styleUrls: ['./setup-user.component.scss']
 })

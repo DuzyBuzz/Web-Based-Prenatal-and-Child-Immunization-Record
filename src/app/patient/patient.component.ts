@@ -33,9 +33,7 @@ export class PatientComponent implements OnInit {
   user$: Observable<User | null>; // Observable for user state
   appointments: Appointment[] = [];
   showDot = true;
-
-
-
+  phoneNumber: string | null = null;
 
   constructor(private http: HttpClient, private authService: AuthService) {
     this.user$ = this.authService.getCurrentUser();
@@ -102,6 +100,9 @@ export class PatientComponent implements OnInit {
       } else {
         this.appointments = [];
       }
+    });
+    this.authService.getCurrentUser().subscribe(user => {
+      this.phoneNumber = user?.phoneNumber ?? null;
     });
   }
 

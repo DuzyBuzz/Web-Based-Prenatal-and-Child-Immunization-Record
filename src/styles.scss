@@ -17,7 +17,9 @@
 .shadow-lg {
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
-
+.border-red-500 {
+  border-color: #ef4444 !important;
+}
 
 .spacing-container {
   padding-top: 2rem; /* Adjust as needed */

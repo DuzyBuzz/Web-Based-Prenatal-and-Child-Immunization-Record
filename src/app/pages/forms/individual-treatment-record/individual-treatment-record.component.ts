@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
-import { Firestore, doc, getDoc, updateDoc, addDoc, collection } from '@angular/fire/firestore';
+import { Firestore, doc, getDoc, updateDoc, addDoc, collection, query, where, getDocs } from '@angular/fire/firestore';
 import { FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { SmsService } from '../../../services/sms.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -22,6 +22,7 @@ export class IndividualTreatmentRecordComponent implements OnInit {
   bloodTypes = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
   successMessage: string | null = null;
   errorMessage: string | null = null;
+  warningMessage: string | null = null;
   now = new Date();
   today = new Date();
   consultationOptions = [
@@ -37,6 +38,8 @@ export class IndividualTreatmentRecordComponent implements OnInit {
     'Child Nutrition'
   ];
   showModal = false;
+  modalMessage: string = '';
+  modalType: 'success' | 'error' | 'warning' = 'success';
   invalidFields: string[] = [];
 
   // Map field names to user-friendly labels
@@ -67,7 +70,20 @@ export class IndividualTreatmentRecordComponent implements OnInit {
     private router: Router
   ) {}
 
-  ngOnInit() {
+  async ngOnInit() {
+      this.showFormError = true;
+    // Get current user UID
+    const uid = await this.authService.getCurrentUserId();
+    if (uid) {
+      const userDocRef = doc(this.firestore, 'users', uid);
+      const userSnap = await getDoc(userDocRef);
+      let nurseName = '';
+      if (userSnap.exists()) {
+        nurseName = userSnap.data()['name'] || '';
+        console.log('Logged in nurse name:', nurseName);
+      }
+      console.log(nurseName);
+    }
     this.motherId = this.route.snapshot.paramMap.get('motherId');
     if (this.motherId) {
       // Fetch the ITR record by document ID
@@ -105,12 +121,10 @@ export class IndividualTreatmentRecordComponent implements OnInit {
   async onSubmit(form?: any) {
     this.successMessage = null;
     this.errorMessage = null;
-    this.showFormError = false; // Reset error
+    this.showFormError = false;
 
-    // If form is invalid, show error and mark fields
     if (form && form.invalid) {
       this.showFormError = true;
-      // Optionally, scroll to first invalid field
       const firstInvalid = document.querySelector('.border-red-500');
       if (firstInvalid) {
         (firstInvalid as HTMLElement).scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -123,7 +137,6 @@ export class IndividualTreatmentRecordComponent implements OnInit {
       const record = {
         ...this.itr,
         dateSaved: new Date().toISOString(),
-
       };
 
       await addDoc(collection(this.firestore, 'ITR'), record);
@@ -137,37 +150,118 @@ export class IndividualTreatmentRecordComponent implements OnInit {
         `Your Next Prenatal is on ${nextPrenatal}. ` +
         `Expect reminder on the day of your appointment.`;
 
-      // Send SMS if contact is provided
       if (contact) {
-        
+        // 1. Send immediate SMS
         this.smsService.sendSms(contact, message).subscribe({
           next: () => {
             this.successMessage = 'Record saved and SMS notification sent successfully.';
-            window.print(); // Print the form after successful save and SMS
-            this.itr = {}; // reset form
+            window.print();
+            this.itr = {};
           },
           error: (err) => {
             this.successMessage = 'Record saved, but failed to send SMS notification.';
             this.errorMessage = 'SMS Error: ' + (err?.error?.message || 'Unknown error sending SMS.');
-            window.print(); // Still print even if SMS fails
+            window.print();
           }
         });
-      
-        this.successMessage = 'Record saved successfully. SMS notification sending is currently disabled.';
-        window.print(); // Print the form after successful save
+
+        // 2. Schedule SMS for the second Tuesday next month at 3 AM
+        const scheduledAt = this.getSecondTuesdayNextMonthISO3AM(); // Make sure this returns "YYYY-MM-DD HH:mma"
+        const scheduledMessage =
+          `Reminder: Your Prenatal appointment is today (${nextPrenatal}). Please visit the health center.`;
+
+        fetch(`https://sms.iprogtech.com/api/v1/message-reminders`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            api_token: '46a41b56a940789fc2ef1178f6151a79d8639ec4', // <-- Your API token here
+            phone_number: contact,
+            scheduled_at: scheduledAt,
+            message: scheduledMessage
+          })
+        })
+        .then(res => res.json())
+        .then(data => {
+          // Optionally handle response
+        })
+        .catch(err => {
+          // Optionally handle error
+        });
       } else {
         this.successMessage = 'Record saved successfully. No contact number provided for SMS notification.';
-        window.print(); // Print the form after successful save
+        window.print();
       }
 
     } catch (error: any) {
-      this.errorMessage = 'Error saving ITR: ' + (error?.message || 'Unknown error');
+      this.errorMessage = 'An error occurred while saving the record. Please try again.';
     }
   }
 
-  printAndSaveOrUpdateITR(form: any) {
-    if (form.invalid) {
+  // Add this helper method to your component:
+  private getSecondTuesdayNextMonthISO3AM(): string {
+    const now = new Date();
+    const year = now.getMonth() === 11 ? now.getFullYear() + 1 : now.getFullYear();
+    const month = (now.getMonth() + 1) % 12;
+    let count = 0;
+    for (let day = 1; day <= 15; day++) {
+      const date = new Date(year, month, day);
+      if (date.getDay() === 2) { // 2 = Tuesday
+        count++;
+        if (count === 2) {
+          date.setHours(3, 0, 0, 0); // Set to 3:00 AM
+          return date.toISOString();
+        }
+      }
+    }
+    return '';
+  }
+
+  private showModalMessage(message: string, type: 'success' | 'error' | 'warning') {
+    this.modalMessage = message;
+    this.modalType = type;
+    this.showModal = true;
+    setTimeout(() => {
+      this.showModal = false;
+      this.router.navigate(['/HCP/Prenatal-Patients']);
+    }, 3000);
+  }
+
+  async printAndSaveOrUpdateITR(form: any) {
+    this.showFormError = false;
+    if (form && form.invalid) {
       this.showFormError = true;
+      Object.values(form.controls).forEach((control: any) => {
+        control.markAsTouched();
+        control.markAsDirty();
+      });
+      setTimeout(() => {
+        const firstInvalid: HTMLElement | null = document.querySelector(
+          'input.ng-invalid, select.ng-invalid, textarea.ng-invalid'
+        );
+        if (firstInvalid) {
+          firstInvalid.focus();
+        }
+      }, 0);
+      return;
+    }
+
+    // Duplicate check before printing or saving
+    const itrCollection = collection(this.firestore, 'itr');
+    const q = query(
+      itrCollection,
+      where('lastName', '==', this.itr.lastName),
+      where('firstName', '==', this.itr.firstName),
+      where('middleName', '==', this.itr.middleName)
+    );
+    const querySnapshot = await getDocs(q);
+
+    // If editing, allow the same name for the current record
+    if (!this.motherId && !querySnapshot.empty) {
+      // Show modal after NOT printing
+      this.showModalMessage(
+        'A record for this patient already exists. Please use the search feature to find and update the existing record.',
+        'warning'
+      );
       return;
     }
 
@@ -176,8 +270,9 @@ export class IndividualTreatmentRecordComponent implements OnInit {
       if (printed) {
         if (this.motherId) {
           await this.updateITR(this.itr);
+          this.showModalMessage('Record updated successfully.', 'success');
         } else {
-          await this.saveITR(this.itr);
+          await this.saveITR(this.itr, true);
         }
         window.removeEventListener('afterprint', afterPrintHandler);
       }
@@ -189,15 +284,30 @@ export class IndividualTreatmentRecordComponent implements OnInit {
   }
 
   // Save ITR with nurse/midwife/incharge name in message
-  async saveITR(itr: any) {
+  async saveITR(itr: any, showModal = false) {
     // 1. Get current user UID
     const uid = await this.authService.getCurrentUserId();
-    if (!uid) {
-      // Handle not logged in
+    if (!uid) return;
+
+    // 2. Check for duplicate by name
+    const itrCollection = collection(this.firestore, 'itr');
+    const q = query(
+      itrCollection,
+      where('lastName', '==', itr.lastName),
+      where('firstName', '==', itr.firstName),
+      where('middleName', '==', itr.middleName)
+    );
+    const querySnapshot = await getDocs(q);
+
+    if (!this.motherId && !querySnapshot.empty) {
+      this.showModalMessage(
+        'Patient already exists. Please search for the patient and edit the details.',
+        'warning'
+      );
       return;
     }
 
-    // 2. Get user name from users collection
+    // 3. Get user name from users collection
     const userDocRef = doc(this.firestore, 'users', uid);
     const userSnap = await getDoc(userDocRef);
     let nurseName = '';
@@ -205,26 +315,27 @@ export class IndividualTreatmentRecordComponent implements OnInit {
       nurseName = userSnap.data()['name'] || '';
     }
 
-    // 3. Add UID and nurseName to ITR
+    // 4. Add UID and nurseName to ITR
     const itrWithMeta = {
       ...itr,
       createdBy: uid,
-      nurseName: nurseName, // or midwife/incharge
+      nurseName: nurseName,
       nextPrenatal: this.getSecondTuesdayNextMonth(),
       typeofConsultation: "Prenatal",
     };
 
-    // 4. Save to Firestore
-    await addDoc(collection(this.firestore, 'itr'), itrWithMeta);
-    this.successMessage = 'Record saved successfully.';
-    this.router.navigate(['/HCP/Prenatal-Patients']);
+    // 5. Save to Firestore
+    await addDoc(itrCollection, itrWithMeta);
+    if (showModal) {
+      this.showModalMessage('Record saved successfully.', 'success');
+    }
   }
 
   async updateITR(itr: any) {
     if (!this.itrDocId) return;
     const itrDocRef = doc(this.firestore, 'itr', this.itrDocId);
     await updateDoc(itrDocRef, itr);
-    this.successMessage = 'Record updated successfully.';
+    // Modal is shown in afterprint handler
   }
 
   async printAsPdfWithName() {
@@ -240,5 +351,21 @@ export class IndividualTreatmentRecordComponent implements OnInit {
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
       pdf.save(filename);
     }
+  }
+
+  // Add this method
+  calculateAgeFromDob() {
+    if (!this.itr.dob) {
+      this.itr.age = null;
+      return;
+    }
+    const today = new Date();
+    const birthDate = new Date(this.itr.dob);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    this.itr.age = age;
   }
 }

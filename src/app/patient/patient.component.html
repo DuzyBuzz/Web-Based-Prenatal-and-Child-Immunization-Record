@@ -1,7 +1,7 @@
 <div class="min-h-screen w-full flex flex-col bg-slate-200 text-gray-800"
 >
   <!-- Layout Grid -->
-  <div class="flex flex-1 overflow-hidden bg-slate-200 bg-cover bg-opacity-100"
+  <div class="flex flex-1 overflow-hidden bg-slate-200 bg-cover bg-opacity-100 "
   style="background-image: url('assets/images/yep.jpg');">
     <!-- Left Side Panel -->
      <div class="flex min-h-screen bg-slate-200 rounded-lg">
@@ -14,7 +14,7 @@
   <img
     src="assets/images/immune-system.png"
     alt="PCIRM Logo"
-    class="w-14 h-14 object-contain rounded-full bg-gradient-to-br from-sky-400 to-teal-300 shadow-xl border-4 border-white"
+    class="w-14 h-14 object-contain rounded-full  bg-gradient-to-br from-sky-400 to-teal-300 shadow-xl border-4 border-white"
   />
 
   <p class="text-base text-sky-600 text-center leading-relaxed font-bold mb-10">
@@ -24,29 +24,13 @@
   </p>
 
   <!-- Navigation -->
-  <nav class="flex flex-col justify-between space-y-96 h-full w-full mt-6">
+  <nav class="flex flex-col justify-between h-full w-full mt-6">
     <!-- Top Section -->
-    <div class="flex flex-col space-y-3 mb-12">
-    <h1 class="text-lg font-black text-gray-700 mb-4 text-center ">Appointments </h1>
-    <ul *ngIf="appointments.length > 0; else noAppointments">
-      <li *ngFor="let appt of appointments" class="border-b py-3 flex flex-col md:flex-row md:justify-between md:items-center">
-        <span class="font-semibold text-gray-800">{{ appt.name }}</span>
-        <span class="text-blue-600">{{ appt.appointmentName }}</span>
-      </li>
-    </ul>
-    <ng-template #noAppointments>
-      <div class="text-gray-500 text-center py-4">No appointments found.</div>
-    </ng-template>
-
-
-    </div>
-
+<div *ngIf="phoneNumber" class="mb-4 text-center">
+  <span class="text-lg text-gray-600 font-black">Phone: {{ phoneNumber }}</span>
+</div>
     <!-- Bottom Section -->
     <div class="flex flex-col space-y-3 mb-6">
-      <button
-        class="flex items-center justify-center px-4 py-3 bg-gray-400 text-gray-800 font-semibold bg-gradient-to-r from-gray-100 to-gray-100 hover:from-gray-300 hover:to-gray-400 rounded-xl transition-all shadow-md hover:shadow-lg border border-gray-500">
-        Settings
-      </button>
       <button (click)="logout()"
         class="flex items-center justify-center px-4 py-3 text-red-500 hover:text-red-600 font-semibold bg-gradient-to-r from-red-100 to-sky-100 hover:from-red-300 hover:to-red-400 rounded-xl transition-all shadow-md hover:shadow-lg border border-red-200">
         Signout
@@ -61,17 +45,16 @@
 >
   <!-- Sidebar Toggle Button (Already existing) -->
   <button
-    (click)="toggleMobileMenu()"
-    class="fixed top-2 left-2 z-50 md:hidden bg-gradient-to-br from-sky-400 to-teal-400 text-white p-2 rounded-full shadow-lg flex items-center justify-center"
+    class="fixed top-2 left-2 z-50  bg-gradient-to-br from-sky-400 to-teal-400 text-white p-2 rounded-full shadow-lg flex items-center justify-center"
     aria-label="Toggle navigation"
   >
-    <img src="assets/images/immune-system.png" alt="Menu" class="w-6 h-6 object-contain" />
+    <img src="assets/images/immune-system.png" alt="Menu" class="w-6 h-6 object-contain " />
   </button>
 
   <!-- Overlay -->
   <div
     *ngIf="mobileMenuOpen"
-    class="fixed inset-0 bg-black bg-opacity-40 z-40 md:hidden"
+    class="fixed inset-0 bg-black bg-opacity-40 z-40 "
     (click)="toggleMobileMenu()"
   ></div>
 
@@ -87,7 +70,7 @@
   >
     <!-- Logo -->
     <div class="flex flex-col sticky items-center mb-6 space-y-2 md:w-0 md:h-0 md:overflow-hidden ">
-      <img src="assets/images/immune-system.png" alt="PCIRM Logo" class="w-14 h-14 object-contain rounded-full bg-gradient-to-br from-sky-400 to-teal-300 border-4 border-white" />
+      <img src="assets/images/immune-system.png" alt="PCIRM Logo" class="w-14 h-14  object-contain rounded-full bg-gradient-to-br from-sky-400 to-teal-300 border-4 border-white" />
   <p class="text-base text-sky-600 text-center leading-relaxed font-bold mb-10">
     Web-Based Prenatal &amp; <br>
     Child Immunization Records<br>
@@ -96,28 +79,21 @@
     </div>
 
     <!-- Navigation -->
-  <nav class="flex flex-col space-y-96 h-full w-full mt-6 md:h-0 md:overflow-hidden">
+  <nav class="flex flex-col h-full w-full mt-6 md:h-0 md:overflow-hidden">
     <!-- Top Section -->
     <div class="flex flex-col space-y-3 mb-12">
    <h1 class="text-lg font-black text-gray-700 mb-4 text-center ">Appointments </h1>
     <ul *ngIf="appointments.length > 0; else noAppointments">
       <li *ngFor="let appt of appointments" class="border-b py-3 flex flex-col md:flex-row md:justify-between md:items-center">
-        <span class="font-semibold text-gray-800">{{ appt.name }}</span>
-        <span class="text-blue-600">{{ appt.appointmentName }}</span>
       </li>
     </ul>
     <ng-template #noAppointments>
-      <div class="text-gray-500 text-center py-4">No appointments found.</div>
     </ng-template>
 
     </div>
 
     <!-- Bottom Section -->
     <div class="flex flex-col space-y-3 mb-6">
-      <button
-        class="flex items-center justify-center px-4 py-3 bg-gray-400 text-gray-800 font-semibold bg-gradient-to-r from-gray-100 to-gray-100 hover:from-gray-300 hover:to-gray-400 rounded-xl transition-all shadow-md hover:shadow-lg border border-gray-500">
-        Settings
-      </button>
       <button (click)="logout()"
         class="flex items-center justify-center px-4 py-3 text-red-500 hover:text-red-600 font-semibold bg-gradient-to-r from-red-100 to-sky-100 hover:from-red-300 hover:to-red-400 rounded-xl transition-all shadow-md hover:shadow-lg border border-red-200">
         Signout
@@ -144,8 +120,6 @@
 
   </div>
 
-  <!-- Footer -->
-    <app-footer></app-footer>
 </div>
 
 <!-- Floating Chat Button -->

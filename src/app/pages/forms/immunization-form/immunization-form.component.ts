@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Firestore, collection, addDoc, doc, getDoc } from '@angular/fire/firestore';
+import { Firestore, collection, addDoc, doc, getDoc, query, where, getDocs } from '@angular/fire/firestore';
 import { SpinnnerComponent } from '../../../shared/core/spinnner/spinnner.component';
 import { BusinessAddressMapComponent } from '../../../shared/core/business-address-map/business-address-map.component';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -12,8 +12,6 @@ import { Router, ActivatedRoute } from '@angular/router';
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    SpinnnerComponent,
-    BusinessAddressMapComponent
   ],
   templateUrl: './immunization-form.component.html',
   styleUrls: ['./immunization-form.component.scss'] // ✅ fixed typo here
@@ -84,7 +82,18 @@ export class ImmunizationFormComponent {
       const formData = this.immunizationForm.value;
 
       try {
-        const childrenCollection = collection(this.firestore, 'children');
+        // Check if patient with the same name exists
+        const childrenCollection = collection(this.firestore, 'immunization');
+        const q = query(childrenCollection, where('name', '==', formData.name));
+        const querySnapshot = await getDocs(q);
+
+        if (!querySnapshot.empty) {
+          alert('Patient already exists. Please search for the patient and edit the details.');
+          this.router.navigate(['/HCP/immunization']);
+          this.isSubmitting = false;
+          return;
+        }
+
         await addDoc(childrenCollection, {
           ...formData,
           createdAt: new Date(),
@@ -98,7 +107,7 @@ export class ImmunizationFormComponent {
         alert('❌ Failed to save record. Please try again.');
       } finally {
         this.isSubmitting = false;
-        this.router.navigate(['/HCP/immunization'])
+        this.router.navigate(['/HCP/immunization']);
       }
     } else {
       this.immunizationForm.markAllAsTouched(); // Trigger validation

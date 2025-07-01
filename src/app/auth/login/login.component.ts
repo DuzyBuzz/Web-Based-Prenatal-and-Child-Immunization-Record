@@ -21,7 +21,7 @@ import { SmsService } from '../../services/sms.service';
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, SharedModule, SpinnnerComponent],
+  imports: [CommonModule, FormsModule, SharedModule, SpinnnerComponent],
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss'],
 })
@@ -179,7 +179,7 @@ export class LoginComponent implements OnInit {
 
     // Only admins and HCPs use Google login, patients use phone login (handled in verifyOtp)
     if (email === this.authService.getAdminEmail()) {
-      this.router.navigate(['/admin']);
+      this.router.navigate(['/Admin']);
       return;
     }
 

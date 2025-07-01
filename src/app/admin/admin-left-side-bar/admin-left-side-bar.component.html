@@ -1,0 +1,127 @@
+<!-- Logo + Navigation: Hidden (w-0 h-0) on mobile, visible on md and up -->
+<div
+  class="flex flex-col items-center mb-6 space-y-2 fixed top-4 left-4 z-[9999] pointer-events-auto w-0 h-0 overflow-hidden md:w-auto md:h-auto rounded-lg"
+
+>
+  <!-- Logo -->
+  <img
+    src="assets/images/immune-system.png"
+    alt="PCIRM Logo"
+    class="w-14 h-14 object-contain rounded-full bg-gradient-to-br from-sky-400 to-teal-300 shadow-xl border-4 border-white"
+  />
+    <h1 class="text-3xl font-black text-sky-800">ADMIN PANEL</h1>
+    ________________________ 
+  <p class="text-base text-sky-600 text-center leading-relaxed font-bold mb-10">
+    Web-Based Prenatal &amp; <br>
+    Child Immunization Records<br>
+    with SMS Notification<br>
+  </p>
+<br>
+
+  <!-- Navigation -->
+  <nav class="flex flex-col justify-between space-y-96 h-full w-full mt-6  ">
+    <!-- Top Section -->
+    <div class="flex flex-col space-y-3 mb-12">
+      <button routerLink="/Admin/Dashboard"
+        class="flex items-center justify-start px-4 py-3 text-sky-800 font-semibold bg-gradient-to-r from-sky-100 to-teal-100 hover:from-sky-200 hover:to-teal-200 transition-all shadow-md hover:shadow-lg border border-sky-200">
+        <span class="material-icons mr-2 text-sky-500">dashboard</span>
+        Dashboard
+      </button>  
+      <button routerLink="/Admin/Users" routerLinkActive="active"
+        class="flex items-center justify-start px-4 py-3 text-sky-800 font-semibold bg-gradient-to-r from-sky-100 to-teal-100 hover:from-sky-200 hover:to-teal-200 transition-all shadow-md hover:shadow-lg border border-sky-200">
+        <span class="material-icons mr-2 text-sky-500">group</span>
+        Users
+      </button> 
+      <button routerLink="/Admin/Reports" routerLinkActive="active"
+        class="flex items-center px-4 py-3 text-amber-800 font-semibold bg-gradient-to-r from-amber-100 to-sky-100 hover:from-amber-200 hover:to-sky-100 transition-all shadow-md hover:shadow-lg border border-amber-200 rounded-lg">
+        <span class="material-icons mr-2 text-amber-500">bar_chart</span>
+        Reports
+      </button>
+    </div>
+
+    <!-- Bottom Section -->
+    <div class="flex flex-col space-y-3 mb-6">
+
+      <button (click)="logout()"
+        class="flex items-center justify-center px-4 py-3 text-red-500 hover:text-red-600 font-semibold bg-gradient-to-r from-red-100 to-sky-100 hover:from-red-300 hover:to-red-400  transition-all shadow-md hover:shadow-lg border border-red-200">
+        <span class="material-icons mr-2 text-red-500">logout</span>
+        Signout
+      </button>
+    </div>
+  </nav>
+</div>
+
+<!-- Sidebar Panel (mobile/desktop) -->
+<div
+  class="relative w-full h-full overflow-hidden "
+>
+  <!-- Sidebar Toggle Button (Already existing) -->
+  <button
+    (click)="toggleMobileMenu()"
+    class="fixed top-2 left-2 z-50 md:hidden bg-gradient-to-br from-sky-400 to-teal-400 text-white p-2 rounded-full shadow-lg flex items-center justify-center"
+    aria-label="Toggle navigation"
+  >
+    <img src="assets/images/immune-system.png" alt="Menu" class="w-6 h-6 object-contain" />
+  </button>
+
+  <!-- Mobile Menu Overlay -->
+  <!-- Overlay -->
+  <div
+    *ngIf="mobileMenuOpen"
+    class="fixed inset-0 bg-black bg-opacity-40 z-40 md:hidden"
+    (click)="toggleMobileMenu()"
+  ></div>
+
+  <!-- Sidebar Panel -->
+  <div
+    class="z-50 shadow-xl transform transition-transform duration-300 ease-in-out
+           fixed top-0 left-0 h-screen w-64 p-6 rounded-lg
+           md:sticky md:top-0 md:h-screen md:w-64 md:block md:translate-x-0 md:shadow-none"
+    [ngClass]="{
+      '-translate-x-full': !mobileMenuOpen,
+      'translate-x-0 bg-slate-200': mobileMenuOpen
+    }"
+  >
+    <!-- Logo -->
+    <div class="flex flex-col sticky items-center mb-10 space-y-2 md:w-0 md:h-0 md:overflow-hidden ">
+      <img src="assets/images/immune-system.png" alt="PCIRM Logo" class="w-14 h-14 object-contain rounded-full bg-gradient-to-br from-sky-400 to-teal-300 border-4 border-white" />
+          <h1 class="text-base font-black text-center text-sky-800">ADMIN PANEL</h1>
+  <p class="text-base text-sky-600 text-center leading-relaxed font-bold mb-10">
+    Web-Based Prenatal &amp; <br>
+    Child Immunization Records<br>
+    with SMS Notification
+  </p>  
+    </div>
+    <!-- Navigation -->
+  <nav class="flex flex-col space-y-80 h-full w-full mt-6 md:h-0 md:overflow-hidden">
+    <!-- Top Section -->
+    <div class="flex flex-col space-y-3 mb-12">
+      <button routerLink="/Admin/Dashboard"
+        class="flex items-center justify-start px-4 py-3 text-sky-800 font-semibold bg-gradient-to-r from-sky-100 to-teal-100 hover:from-sky-200 hover:to-teal-200 transition-all shadow-md hover:shadow-lg border border-sky-200">
+        <span class="material-icons mr-2 text-sky-500">dashboard</span>
+        Dashboard
+      </button>  
+      <button routerLink="/Admin/Users" routerLinkActive="active"
+        class="flex items-center justify-start px-4 py-3 text-sky-800 font-semibold bg-gradient-to-r from-sky-100 to-teal-100 hover:from-sky-200 hover:to-teal-200 transition-all shadow-md hover:shadow-lg border border-sky-200">
+        <span class="material-icons mr-2 text-sky-500">group</span>
+        Users
+      </button> 
+      <button routerLink="/Admin/Reports" routerLinkActive="active"
+        class="flex items-center px-4 py-3 text-amber-800 font-semibold bg-gradient-to-r from-amber-100 to-sky-100 hover:from-amber-200 hover:to-sky-100 transition-all shadow-md hover:shadow-lg border border-amber-200 rounded-lg">
+        <span class="material-icons mr-2 text-amber-500">bar_chart</span>
+        Reports
+      </button>
+    </div>
+
+    <!-- Bottom Section -->
+    <div class="flex flex-col space-y-3 mb-6">
+
+      <button (click)="logout()"
+        class="flex items-center justify-center px-4 py-3 text-red-500 hover:text-red-600 font-semibold bg-gradient-to-r from-red-100 to-sky-100 hover:from-red-300 hover:to-red-400  transition-all shadow-md hover:shadow-lg border border-red-200">
+        <span class="material-icons mr-2 text-red-500">logout</span>
+        Signout
+      </button>
+    </div>
+  </nav>
+  </div>
+</div>

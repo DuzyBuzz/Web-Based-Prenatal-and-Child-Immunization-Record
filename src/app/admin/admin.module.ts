@@ -1,21 +1,31 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AdminComponent } from './admin.component';
+import { RouterModule, RouterOutlet } from '@angular/router';
+import { adminRoutes } from './admin.routes';
+import { AdminLeftSideBarComponent } from "./admin-left-side-bar/admin-left-side-bar.component";
+import { NgxChartsModule } from '@swimlane/ngx-charts';
 import { AdminDashboardComponent } from './pages/admin-dashboard/admin-dashboard.component';
-import { AdminSidebarComponent } from './pages/admin-sidebar/admin-sidebar.component';
-import { RouterModule } from '@angular/router';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { FullCalendarModule } from '@fullcalendar/angular';
 
 @NgModule({
   declarations: [
     AdminComponent,
-    AdminDashboardComponent,
-    AdminSidebarComponent
+    AdminLeftSideBarComponent,
   ],
   imports: [
     CommonModule,
+    RouterModule.forChild(adminRoutes),
+    FormsModule,
+    ReactiveFormsModule,
     RouterModule,
-    AdminDashboardComponent,
-    AdminSidebarComponent
+    FullCalendarModule,
+    NgxChartsModule, 
+  ],
+  exports: [
+    AdminComponent,
+    AdminLeftSideBarComponent,
   ]
 })
 export class AdminModule { }
