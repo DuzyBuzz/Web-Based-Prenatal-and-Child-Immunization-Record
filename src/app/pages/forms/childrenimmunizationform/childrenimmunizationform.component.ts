@@ -198,18 +198,28 @@ export class ChildrenimmunizationformComponent implements OnInit {
       if (contact) {
         // 1. Send immediate SMS
         this.smsService.sendSms(contact, message).subscribe({
-          next: (res: any) => this.response = `Success: ${JSON.stringify(res)}`,
-          error: (err: { error: any; }) => this.response = `Error: ${JSON.stringify(err.error)}`
+          next: (res: any) => {
+            this.response = `Success: ${JSON.stringify(res)}`;
+            console.log("Immediate SMS sent successfully:", res);
+          },
+          error: (err: { error: any; }) => {
+            this.response = `Error: ${JSON.stringify(err.error)}`;
+            console.error("Immediate SMS failed:", err.error);
+          }
         });
 
         // 2. Schedule SMS for SecondWednesdayNextMonth at 3 AM
-        const scheduledAt = this.getSecondWednesdayNextMonthAt3AMString(); // Format: YYYY-MM-DD HH:mma
+        const scheduledAt = this.getSecondWednesdayNextMonthAt3AMString();
         const scheduledMessage =
           `Reminder: Immunization for ${this.formData.name} is today (${nextImmunization}). Please visit the health center.`;
 
         this.smsService.sendSms(contact, scheduledMessage, scheduledAt).subscribe({
-          next: (res: any) => {/* Optionally handle response */},
-          error: (err: { error: any; }) => {/* Optionally handle error */}
+          next: (res: any) => {
+            console.log("Scheduled SMS sent successfully:", res);
+          },
+          error: (err: { error: any; }) => {
+            console.error("Scheduled SMS failed:", err.error);
+          }
         });
       }
 
@@ -230,6 +240,42 @@ export class ChildrenimmunizationformComponent implements OnInit {
     }
     data.SecondWednesdayNextMonth = this.getSecondWednesdayNextMonth();
     await addDoc(collection(this.firestore, 'immunization'), data);
+
+    // --- SMS sending logic here ---
+    const contact = data.contact;
+    const nextImmunization = this.getSecondWednesdayNextMonth();
+    const message =
+      `Good day ${data.mother}, ` +
+      `Next Immunization for ${data.name} is on ${nextImmunization}. ` +
+      `Expect reminder on the day of your appointment.`;
+
+    if (contact) {
+      // 1. Send immediate SMS
+      this.smsService.sendSms(contact, message).subscribe({
+        next: (res: any) => {
+          console.log("Immediate SMS sent successfully:", res);
+        },
+        error: (err: { error: any; }) => {
+          console.error("Immediate SMS failed:", err.error);
+        }
+      });
+
+      // 2. Schedule SMS for SecondWednesdayNextMonth at 3 AM
+      const scheduledAt = this.getSecondWednesdayNextMonthAt3AMString();
+      const scheduledMessage =
+        `Reminder: Immunization for ${data.name} is today (${nextImmunization}). Please visit the health center.`;
+
+      this.smsService.sendSms(contact, scheduledMessage, scheduledAt).subscribe({
+        next: (res: any) => {
+          console.log("Scheduled SMS sent successfully:", res);
+        },
+        error: (err: { error: any; }) => {
+          console.error("Scheduled SMS failed:", err.error);
+        }
+      });
+    }
+    // --- end SMS logic ---
+
     if (showModal) {
       this.showModalMessage('Immunization record saved successfully!', 'success');
     }
@@ -245,6 +291,42 @@ export class ChildrenimmunizationformComponent implements OnInit {
     data.SecondWednesdayNextMonth = this.getSecondWednesdayNextMonth();
     const docRef = doc(this.firestore, 'immunization', id);
     await updateDoc(docRef, data);
+
+    // --- SMS sending logic here ---
+    const contact = data.contact;
+    const nextImmunization = this.getSecondWednesdayNextMonth();
+    const message =
+      `Good day ${data.mother}, ` +
+      `Next Immunization for ${data.name} is on ${nextImmunization}. ` +
+      `Expect reminder on the day of your appointment.`;
+
+    if (contact) {
+      // 1. Send immediate SMS
+      this.smsService.sendSms(contact, message).subscribe({
+        next: (res: any) => {
+          console.log("Immediate SMS sent successfully:", res);
+        },
+        error: (err: { error: any; }) => {
+          console.error("Immediate SMS failed:", err.error);
+        }
+      });
+
+      // 2. Schedule SMS for SecondWednesdayNextMonth at 3 AM
+      const scheduledAt = this.getSecondWednesdayNextMonthAt3AMString();
+      const scheduledMessage =
+        `Reminder: Immunization for ${data.name} is today (${nextImmunization}). Please visit the health center.`;
+
+      this.smsService.sendSms(contact, scheduledMessage, scheduledAt).subscribe({
+        next: (res: any) => {
+          console.log("Scheduled SMS sent successfully:", res);
+        },
+        error: (err: { error: any; }) => {
+          console.error("Scheduled SMS failed:", err.error);
+        }
+      });
+    }
+    // --- end SMS logic ---
+
     if (showModal) {
       this.showModalMessage('Immunization record updated successfully!', 'success');
     }

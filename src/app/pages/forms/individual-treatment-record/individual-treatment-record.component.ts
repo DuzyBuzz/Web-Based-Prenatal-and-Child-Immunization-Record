@@ -153,39 +153,32 @@ export class IndividualTreatmentRecordComponent implements OnInit {
       if (contact) {
         // 1. Send immediate SMS
         this.smsService.sendSms(contact, message).subscribe({
-          next: () => {
+          next: (res: any) => {
             this.successMessage = 'Record saved and SMS notification sent successfully.';
+            console.log("Immediate SMS sent successfully:", res);
             window.print();
             this.itr = {};
           },
-          error: (err) => {
+          error: (err: { error: any }) => {
             this.successMessage = 'Record saved, but failed to send SMS notification.';
             this.errorMessage = 'SMS Error: ' + (err?.error?.message || 'Unknown error sending SMS.');
+            console.error("Immediate SMS failed:", err.error);
             window.print();
           }
         });
 
         // 2. Schedule SMS for the second Tuesday next month at 3 AM
-        const scheduledAt = this.getSecondTuesdayNextMonthISO3AM(); // Make sure this returns "YYYY-MM-DD HH:mma"
+        const scheduledAt = this.getSecondTuesdayNextMonthISO3AM(); // Format: YYYY-MM-DD HH:mma
         const scheduledMessage =
           `Reminder: Your Prenatal appointment is today (${nextPrenatal}). Please visit the health center.`;
 
-        fetch(`https://sms.iprogtech.com/api/v1/message-reminders`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            api_token: '46a41b56a940789fc2ef1178f6151a79d8639ec4', // <-- Your API token here
-            phone_number: contact,
-            scheduled_at: scheduledAt,
-            message: scheduledMessage
-          })
-        })
-        .then(res => res.json())
-        .then(data => {
-          // Optionally handle response
-        })
-        .catch(err => {
-          // Optionally handle error
+        this.smsService.sendSms(contact, scheduledMessage, scheduledAt).subscribe({
+          next: (res: any) => {
+            console.log("Scheduled SMS sent successfully:", res);
+          },
+          error: (err: { error: any }) => {
+            console.error("Scheduled SMS failed:", err.error);
+          }
         });
       } else {
         this.successMessage = 'Record saved successfully. No contact number provided for SMS notification.';
@@ -326,6 +319,43 @@ export class IndividualTreatmentRecordComponent implements OnInit {
 
     // 5. Save to Firestore
     await addDoc(itrCollection, itrWithMeta);
+
+    // --- SMS sending logic here ---
+    const name = itrWithMeta.firstName ? `${itrWithMeta.firstName} ${itrWithMeta.lastName}` : 'Patient';
+    const contact = itrWithMeta.contact;
+    const nextPrenatal = this.getSecondTuesdayNextMonth();
+    const message =
+      `Good day ${name}, ` +
+      `Your Next Prenatal is on ${nextPrenatal}. ` +
+      `Expect reminder on the day of your appointment.`;
+
+    if (contact) {
+      // 1. Send immediate SMS
+      this.smsService.sendSms(contact, message).subscribe({
+        next: (res: any) => {
+          console.log("Immediate SMS sent successfully:", res);
+        },
+        error: (err: { error: any }) => {
+          console.error("Immediate SMS failed:", err.error);
+        }
+      });
+
+      // 2. Schedule SMS for the second Tuesday next month at 3 AM
+      const scheduledAt = this.getSecondTuesdayNextMonthISO3AM();
+      const scheduledMessage =
+        `Reminder: Your Prenatal appointment is today (${nextPrenatal}). Please visit the health center.`;
+
+      this.smsService.sendSms(contact, scheduledMessage, scheduledAt).subscribe({
+        next: (res: any) => {
+          console.log("Scheduled SMS sent successfully:", res);
+        },
+        error: (err: { error: any }) => {
+          console.error("Scheduled SMS failed:", err.error);
+        }
+      });
+    }
+    // --- end SMS logic ---
+
     if (showModal) {
       this.showModalMessage('Record saved successfully.', 'success');
     }
