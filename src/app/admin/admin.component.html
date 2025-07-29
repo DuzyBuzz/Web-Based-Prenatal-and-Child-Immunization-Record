@@ -14,7 +14,14 @@
     >
       <div class="flex-1 overflow-y-auto  p-6"
       >
+      <div class="flex">
+  <!-- The sidebar is rendered by the router-outlet or parent layout, so no need to include it here -->
+
+  <!-- Main Content -->
+  <div class="flex-1 min-h-screen bg-gray-50 transition-all duration-300 md:ml-64">
         <router-outlet></router-outlet>
+      </div>
+        </div>
       </div>
     </main>
 

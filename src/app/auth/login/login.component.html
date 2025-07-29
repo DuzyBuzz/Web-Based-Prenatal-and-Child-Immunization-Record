@@ -2,7 +2,7 @@
 
   <!-- Left Side - Background Image Section -->
   <div
-    class="relative flex flex-col items-center justify-center p-12 text-center text-slate-200 bg-cover bg-no-repeat rounded-lg shadow-2xl w-5/6 hidden md:flex"
+    class="relative flex-col items-center justify-center p-12 text-center text-slate-200 bg-cover bg-no-repeat rounded-lg shadow-2xl w-5/6 hidden md:flex"
     style="background-image: url('assets/images/loginbg.jpg');">
   </div>
 
@@ -40,7 +40,7 @@
       class="flex items-center justify-center mb-6 w-60 p-3 rounded-lg border border-gray-300 bg-white text-gray-700 font-medium hover:bg-gray-100 transition-all shadow-sm"
       [disabled]="loading">
       <img src="assets/images/google.png" class="w-10 h-10 mr-3" alt="Google">
-      <span *ngIf="!loading">Sign in with Google</span>
+      <span *ngIf="!loading">Login with Google</span>
       <span *ngIf="loading">Signing in...</span>
     </button>
     <p class="text-gray-500 mb-1 font-medium">Login for Patient</p>
@@ -50,7 +50,7 @@
       [disabled]="loading">
 
       <img src="assets/images/telephone.png" class="w-8 h-8 mr-3" alt="Telephone">
-      Sign in with Phone
+      Login with Phone
     </button>
 
     <div *ngIf="showPhoneAuth" class="mt-6 w-60 bg-white rounded-lg shadow p-4">

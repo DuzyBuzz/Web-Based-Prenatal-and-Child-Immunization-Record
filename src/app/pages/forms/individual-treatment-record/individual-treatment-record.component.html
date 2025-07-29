@@ -276,19 +276,19 @@
         <span class="ml-4">Tel. /Cel. No.:</span>
         <!-- Contact Number -->
 <input
-  type="text"
+  type="number"
   name="contact"
   [(ngModel)]="itr.contact"
   #contact="ngModel"
   class="border-b w-[120px] ml-1"
   required
-  pattern="^09[0-9]{9}$"
-  maxlength="11"
+  min="900000000"
+  max="99999999999"
   [ngClass]="{
     'border-black': !(contact.invalid && (contact.dirty || contact.touched || showFormError)),
     'border-red-500': contact.invalid && (contact.dirty || contact.touched || showFormError)
   }"
-  [title]="contact.invalid && (contact.dirty || contact.touched || showFormError) ? 'Please enter a valid Philippine mobile number (e.g., 09XXXXXXXXX).' : ''"
+  [title]="'Please enter a valid Philippine mobile number (e.g., 09XXXXXXXXX).'"
 />
       </div>
 

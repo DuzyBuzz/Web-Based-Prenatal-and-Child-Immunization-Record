@@ -16,6 +16,16 @@ import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 export class ChildrenimmunizationformComponent implements OnInit {
   formData: any = {}; // Holds all form values
   response = '';
+
+  // Allow only numeric input for contact number field
+  allowOnlyNumbers(event: KeyboardEvent): void {
+    const charCode = event.which ? event.which : event.keyCode;
+    // Allow only numbers (0-9)
+    if (charCode < 48 || charCode > 57) {
+      event.preventDefault();
+    }
+  }
+
   today = new Date();
   now: Date | undefined;
   showFormError = false;

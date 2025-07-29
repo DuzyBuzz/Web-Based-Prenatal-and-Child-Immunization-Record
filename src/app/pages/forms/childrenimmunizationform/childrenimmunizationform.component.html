@@ -100,11 +100,11 @@
         type="text"
         class="border p-1"
         [(ngModel)]="formData.bhw"
-        required
+        
         #bhw="ngModel"
         [ngClass]="{'border-red-500': bhw.invalid && (bhw.dirty || bhw.touched || showFormError)}"
         [title]="bhw.invalid && (bhw.dirty || bhw.touched) ? 'You have just refreshed the form.\nBHW is required.\nIf this field is not populated, \nplease return to the previous page \nand revisit this form to refresh your session.' : ''"
-        readonly
+        
       />
       </div>
       <div class="flex flex-col">
@@ -115,7 +115,7 @@
         type="text"
         class="border p-1"
         [(ngModel)]="formData.philhealth"
-        required
+        
         #philhealth="ngModel"
         [ngClass]="{'border-red-500': philhealth.invalid && (philhealth.dirty || philhealth.touched )}"
         [title]="philhealth.invalid && (philhealth.dirty || philhealth.touched) ? 'PhilHealth No. is required.' : ''"
@@ -132,7 +132,10 @@
         required
         pattern="^09[0-9]{9}$"
         maxlength="11"
+        inputmode="numeric"
+        autocomplete="off"
         #contact="ngModel"
+        (keypress)="allowOnlyNumbers($event)"
         [ngClass]="{'border-red-500': contact.invalid && (contact.dirty || contact.touched || showFormError)}"
         [title]="contact.invalid && (contact.dirty || contact.touched) ? 'Please enter a valid Philippine mobile number (e.g., 09XXXXXXXXX).' : ''"
       />

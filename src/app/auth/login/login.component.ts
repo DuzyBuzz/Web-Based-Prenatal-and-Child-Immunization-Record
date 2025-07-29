@@ -70,12 +70,38 @@ export class LoginComponent implements OnInit {
     this.authService.googleSignIn()
       .then(async (user: User) => {
         this.loading = false;
-        const isComplete = await this.authService.isProfileComplete(user.uid);
-        this.navigating = true;
-        if (!isComplete) {
-          this.router.navigate(['/auth/setup-user']);
+        if (!user.email) {
+          window.alert('No email found in Google account.');
+          this.router.navigate(['/auth/login']);
+          return;
+        }
+
+        // Check if email exists in admin collection
+        const adminQuery = query(
+          collection(this.authService['firestore'], 'admin'),
+          where('email', '==', user.email)
+        );
+        const adminSnapshot = await getDocs(adminQuery);
+
+        if (!adminSnapshot.empty) {
+          this.navigating = true;
+          this.router.navigate(['/Admin']);
+          return;
+        }
+
+        // Check if email exists in HCP collection
+        const hcpQuery = query(
+          collection(this.authService['firestore'], 'HCP'),
+          where('email', '==', user.email)
+        );
+        const hcpSnapshot = await getDocs(hcpQuery);
+
+        if (!hcpSnapshot.empty) {
+          this.navigating = true;
+          this.router.navigate(['/HCP']);
         } else {
-          this.redirectUser(user.email);
+          window.alert('Google account does not have permission to access this site');
+          this.router.navigate(['/auth/login']);
         }
       })
       .catch(errorMessage => {

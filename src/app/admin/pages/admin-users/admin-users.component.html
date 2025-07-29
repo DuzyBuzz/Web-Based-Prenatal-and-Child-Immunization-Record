@@ -1,80 +1,82 @@
-<div class="max-w-3xl mx-auto p-4 md:p-8">
-  <h2 class="text-2xl md:text-3xl font-bold text-teal-700 mb-8 flex items-center gap-2">
-    <span class="inline-block align-middle">
-      <svg class="w-7 h-7 text-teal-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M5.121 17.804A13.937 13.937 0 0112 15c2.5 0 4.847.655 6.879 1.804M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-      </svg>
-    </span>
-    HCP Users Management
-  </h2>
+<div class="w-full flex justify-center bg-gray-50 min-h-screen py-8">
+  <div class="w-full max-w-5xl bg-white rounded-2xl shadow-lg p-8">
+    <h2 class="text-3xl font-bold text-teal-700 mb-8 flex items-center gap-3 justify-center">
+      <span class="material-icons text-teal-500 text-4xl align-middle">group</span>
+      HCP Users Management
+    </h2>
 
-  <!-- Add/Edit User Form -->
-  <div class="bg-white rounded-xl shadow-md p-6 mb-10">
-    <form [formGroup]="userForm" (ngSubmit)="addOrUpdateUser()" class="space-y-4">
-      <div class="flex flex-col md:flex-row gap-4">
-        <div class="flex-1">
-          <label class="block text-gray-700 font-semibold mb-1">Email</label>
-          <input formControlName="email" type="email"
-            class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-400 transition"
-            [class.border-red-400]="userForm.get('email')?.invalid && userForm.get('email')?.touched">
-          <div *ngIf="userForm.get('email')?.invalid && userForm.get('email')?.touched" class="text-red-500 text-xs mt-1">Valid email required.</div>
+    <!-- Add/Edit User Form -->
+    <div class="bg-gray-100 rounded-xl shadow p-6 mb-10 w-full">
+      <form [formGroup]="userForm" (ngSubmit)="addOrUpdateUser()" class="space-y-4">
+        <div class="flex flex-col md:flex-row gap-4">
+          <div class="flex-1">
+            <label class="block text-gray-700 font-semibold mb-1">Email</label>
+            <input formControlName="email" type="email"
+              class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-400 transition"
+              [class.border-red-400]="userForm.get('email')?.invalid && userForm.get('email')?.touched">
+            <div *ngIf="userForm.get('email')?.invalid && userForm.get('email')?.touched" class="text-red-500 text-xs mt-1">Valid email required.</div>
+          </div>
+          <div class="flex-1">
+            <label class="block text-gray-700 font-semibold mb-1">Name</label>
+            <input formControlName="name" type="text"
+              class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-400 transition"
+              [class.border-red-400]="userForm.get('name')?.invalid && userForm.get('name')?.touched">
+            <div *ngIf="userForm.get('name')?.invalid && userForm.get('name')?.touched" class="text-red-500 text-xs mt-1">Name required.</div>
+          </div>
         </div>
-        <div class="flex-1">
-          <label class="block text-gray-700 font-semibold mb-1">Name</label>
-          <input formControlName="name" type="text"
-            class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-400 transition"
-            [class.border-red-400]="userForm.get('name')?.invalid && userForm.get('name')?.touched">
-          <div *ngIf="userForm.get('name')?.invalid && userForm.get('name')?.touched" class="text-red-500 text-xs mt-1">Name required.</div>
+        <div class="flex gap-3 mt-2 justify-start">
+          <button type="submit" [disabled]="userForm.invalid || loading"
+            class="px-6 py-2 bg-teal-600 text-white rounded-lg shadow hover:bg-teal-700 transition font-semibold flex items-center gap-2">
+            <span class="material-icons text-base">{{ editingUser ? 'edit' : 'person_add' }}</span>
+            {{ editingUser ? 'Update User' : 'Add User' }}
+          </button>
+          <button *ngIf="editingUser" type="button" (click)="cancelEdit()"
+            class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg shadow hover:bg-gray-300 transition font-semibold flex items-center gap-2">
+            <span class="material-icons text-base">cancel</span>
+            Cancel
+          </button>
         </div>
-      </div>
-      <div class="flex gap-3 mt-2">
-        <button type="submit" [disabled]="userForm.invalid || loading"
-          class="px-5 py-2 bg-teal-600 text-white rounded-lg shadow hover:bg-teal-700 transition font-semibold">
-          {{ editingUser ? 'Update User' : 'Add User' }}
-        </button>
-        <button *ngIf="editingUser" type="button" (click)="cancelEdit()"
-          class="px-5 py-2 bg-gray-200 text-gray-700 rounded-lg shadow hover:bg-gray-300 transition font-semibold">
-          Cancel
-        </button>
-      </div>
-    </form>
-  </div>
+      </form>
+    </div>
 
-  <!-- Users Table -->
-  <div class="bg-white rounded-xl shadow-md p-6">
-    <h3 class="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2">
-      <span class="inline-block w-3 h-3 rounded-full bg-sky-400"></span>
-      All HCP Users
-    </h3>
-    <div class="overflow-x-auto">
-      <table class="min-w-full border-separate border-spacing-0 text-sm">
-        <thead class="bg-sky-100">
-          <tr>
-            <th class="px-4 py-2 border-b text-left font-semibold">UID</th>
-            <th class="px-4 py-2 border-b text-left font-semibold">Email</th>
-            <th class="px-4 py-2 border-b text-left font-semibold">Name</th>
-            <th class="px-4 py-2 border-b text-left font-semibold">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let user of users$ | async" class="hover:bg-sky-50 transition">
-            <td class="px-4 py-2 border-b break-all">{{ user.id }}</td>
-            <td class="px-4 py-2 border-b">{{ user.email }}</td>
-            <td class="px-4 py-2 border-b">{{ user.name }}</td>
-            <td class="px-4 py-2 border-b">
-              <button (click)="editUser(user)"
-                class="px-3 py-1 bg-yellow-400 text-white rounded hover:bg-yellow-500 font-semibold mr-2 transition">
-                Edit
-              </button>
-              <button (click)="deleteUser(user)"
-                class="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 font-semibold transition">
-                Delete
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      <div *ngIf="(users$ | async)?.length === 0" class="text-center text-gray-400 py-6">No users found.</div>
+    <!-- Users Table -->
+    <div class="bg-white rounded-xl shadow-md p-6 w-full">
+      <h3 class="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2">
+        <span class="material-icons text-sky-400">supervisor_account</span>
+        All HCP Users
+      </h3>
+      <div class="overflow-x-auto">
+        <table class="min-w-full border-separate border-spacing-0 text-sm">
+          <thead class="bg-sky-100">
+            <tr>
+              <th class="px-4 py-2 border-b text-left font-semibold">UID</th>
+              <th class="px-4 py-2 border-b text-left font-semibold">Email</th>
+              <th class="px-4 py-2 border-b text-left font-semibold">Name</th>
+              <th class="px-4 py-2 border-b text-left font-semibold">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let user of users$ | async" class="hover:bg-sky-50 transition">
+              <td class="px-4 py-2 border-b break-all">{{ user.id }}</td>
+              <td class="px-4 py-2 border-b">{{ user.email }}</td>
+              <td class="px-4 py-2 border-b">{{ user.name }}</td>
+              <td class="px-4 py-2 border-b flex gap-2">
+                <button (click)="editUser(user)"
+                  class="px-3 py-1 bg-yellow-400 text-white rounded hover:bg-yellow-500 font-semibold flex items-center gap-1 transition">
+                  <span class="material-icons text-base">edit</span>
+                  Edit
+                </button>
+                <button (click)="deleteUser(user)"
+                  class="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 font-semibold flex items-center gap-1 transition">
+                  <span class="material-icons text-base">delete</span>
+                  Delete
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div *ngIf="(users$ | async)?.length === 0" class="text-center text-gray-400 py-6">No users found.</div>
+      </div>
     </div>
   </div>
 </div>
