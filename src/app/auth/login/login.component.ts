@@ -12,7 +12,7 @@ import {
   User,
   Auth
 } from '@angular/fire/auth';
-import { collection, getDocs, query, where } from '@angular/fire/firestore';
+import { getDocs, query, where, collection } from '@angular/fire/firestore';
 
 import { SharedModule } from '../../shared/shared.module';
 import { SpinnnerComponent } from '../../shared/core/spinnner/spinnner.component';
@@ -237,5 +237,42 @@ export class LoginComponent implements OnInit {
       next: (res: any) => this.response = `Success: ${JSON.stringify(res)}`,
       error: (err: { error: any; }) => this.response = `Error: ${JSON.stringify(err.error)}`
     });
+  }
+
+  async loginWithEmail() {
+    this.loading = true;
+    try {
+      // Check admin collection
+      const adminQuery = query(
+        collection(this.authService['firestore'], 'admin'),
+        where('email', '==', this.email),
+        where('password', '==', this.password)
+      );
+      const adminSnapshot = await getDocs(adminQuery);
+
+      if (!adminSnapshot.empty) {
+        this.router.navigate(['/Admin']);
+        return;
+      }
+
+      // Check HCP collection
+      const hcpQuery = query(
+        collection(this.authService['firestore'], 'HCP'),
+        where('email', '==', this.email),
+        where('password', '==', this.password)
+      );
+      const hcpSnapshot = await getDocs(hcpQuery);
+
+      if (!hcpSnapshot.empty) {
+        this.router.navigate(['/HCP']);
+        return;
+      }
+
+      window.alert('Invalid email or password.');
+    } catch (error) {
+      window.alert('Login error: ' + (error as any).message);
+    } finally {
+      this.loading = false;
+    }
   }
 }

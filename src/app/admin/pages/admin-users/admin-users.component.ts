@@ -8,6 +8,7 @@ interface HCPUser {
   id?: string;
   email: string;
   name: string;
+  password?: string; // Add password field
 }
 
 @Component({
@@ -28,7 +29,8 @@ export class AdminUsersComponent implements OnInit {
     this.users$ = collectionData(hcpCollection, { idField: 'id' }) as Observable<HCPUser[]>;
     this.userForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
-      name: ['', Validators.required]
+      name: ['', Validators.required],
+      password: ['', Validators.required] // Add password control
     });
   }
 
@@ -43,10 +45,10 @@ export class AdminUsersComponent implements OnInit {
       if (this.editingUser) {
         // Update
         const userDoc = doc(this.firestore, 'HCP', this.editingUser.id!);
-        await updateDoc(userDoc, { email: value.email, name: value.name });
+        await updateDoc(userDoc, { email: value.email, name: value.name, password: value.password });
       } else {
         // Add
-        await addDoc(hcpCollection, { email: value.email, name: value.name });
+        await addDoc(hcpCollection, { email: value.email, name: value.name, password: value.password });
       }
       this.cancelEdit();
     } finally {
@@ -56,7 +58,7 @@ export class AdminUsersComponent implements OnInit {
 
   editUser(user: HCPUser) {
     this.editingUser = user;
-    this.userForm.setValue({ email: user.email, name: user.name });
+    this.userForm.setValue({ email: user.email, name: user.name, password: user.password ?? '' });
   }
 
   cancelEdit() {

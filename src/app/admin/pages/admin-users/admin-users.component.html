@@ -24,6 +24,15 @@
             <div *ngIf="userForm.get('name')?.invalid && userForm.get('name')?.touched" class="text-red-500 text-xs mt-1">Name required.</div>
           </div>
         </div>
+        <div class="flex flex-col md:flex-row gap-4">
+          <div class="flex-1">
+            <label class="block text-gray-700 font-semibold mb-1">Password</label>
+            <input formControlName="password" type="password"
+              class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-400 transition"
+              [class.border-red-400]="userForm.get('password')?.invalid && userForm.get('password')?.touched">
+            <div *ngIf="userForm.get('password')?.invalid && userForm.get('password')?.touched" class="text-red-500 text-xs mt-1">Password required.</div>
+          </div>
+        </div>
         <div class="flex gap-3 mt-2 justify-start">
           <button type="submit" [disabled]="userForm.invalid || loading"
             class="px-6 py-2 bg-teal-600 text-white rounded-lg shadow hover:bg-teal-700 transition font-semibold flex items-center gap-2">
