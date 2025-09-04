@@ -1,22 +1,11 @@
 import { Component, OnInit } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../auth.service';
-
-import {
-  getAuth,
-  signInWithPhoneNumber,
-  RecaptchaVerifier,
-  ConfirmationResult,
-  User,
-  Auth
-} from '@angular/fire/auth';
 import { getDocs, query, where, collection } from '@angular/fire/firestore';
-
 import { SharedModule } from '../../shared/shared.module';
 import { SpinnnerComponent } from '../../shared/core/spinnner/spinnner.component';
-import { SmsService } from '../../services/sms.service';
 
 @Component({
   selector: 'app-login',
@@ -27,217 +16,17 @@ import { SmsService } from '../../services/sms.service';
 })
 export class LoginComponent implements OnInit {
   // Form data
-  email = '';
+  username = '';
   password = '';
-  phoneNumber = '';
-  otp = '';
 
-
-  to = '09511365191';
-  message = 'initial tesstss';
-  response = '';
   // State management
   loading = false;
   navigating = false;
   spinnerMessage = 'Preparing your dashboard...';
-  showPhoneAuth = false;
-  otpSent = false;
-  showPhoneModal = false;
-  showRecaptcha = false;
 
-  // Firebase related
-  recaptchaVerifier?: RecaptchaVerifier;
-  confirmationResult?: ConfirmationResult;
+  constructor(private authService: AuthService, private router: Router) {}
 
-  constructor(private authService: AuthService, private router: Router, private smsService: SmsService) {}
-
-  ngOnInit() {
-    // Target date: June 11, 2025, 1:30 AM local time
-    const target = new Date(2025, 5, 11, 1, 30, 0, 0); // Month is 0-based (5 = June)
-    const now = new Date();
-    const msUntilTarget = target.getTime() - now.getTime();
-
-    if (msUntilTarget > 0) {
-      setTimeout(() => {
-        this.send();
-      }, msUntilTarget);
-    }
-  }
-
-  // 🔐 Google Sign-In
-  loginWithGoogle() {
-    this.loading = true;
-    this.authService.googleSignIn()
-      .then(async (user: User) => {
-        this.loading = false;
-        if (!user.email) {
-          window.alert('No email found in Google account.');
-          this.router.navigate(['/auth/login']);
-          return;
-        }
-
-        // Check if email exists in admin collection
-        const adminQuery = query(
-          collection(this.authService['firestore'], 'admin'),
-          where('email', '==', user.email)
-        );
-        const adminSnapshot = await getDocs(adminQuery);
-
-        if (!adminSnapshot.empty) {
-          this.navigating = true;
-          this.router.navigate(['/Admin']);
-          return;
-        }
-
-        // Check if email exists in HCP collection
-        const hcpQuery = query(
-          collection(this.authService['firestore'], 'HCP'),
-          where('email', '==', user.email)
-        );
-        const hcpSnapshot = await getDocs(hcpQuery);
-
-        if (!hcpSnapshot.empty) {
-          this.navigating = true;
-          this.router.navigate(['/HCP']);
-        } else {
-          window.alert('Google account does not have permission to access this site');
-          this.router.navigate(['/auth/login']);
-        }
-      })
-      .catch(errorMessage => {
-        this.loading = false;
-        window.alert(errorMessage);
-      });
-  }
-
-  // 📱 Show phone input + render reCAPTCHA
-  loginWithPhone() {
-    this.showPhoneModal = true;
-    this.phoneNumber = '';
-    this.otp = '';
-    this.otpSent = false;
-    this.showRecaptcha = false;
-    this.recaptchaVerifier = undefined;
-  }
-
-  closePhoneModal() {
-    this.showPhoneModal = false;
-    this.otpSent = false;
-    this.showRecaptcha = false;
-    this.phoneNumber = '';
-    this.otp = '';
-    this.recaptchaVerifier = undefined;
-  }
-
-  onPhoneInput() {
-    // Remove non-digits and limit to 10 digits
-    this.phoneNumber = this.phoneNumber.replace(/\D/g, '').slice(0, 10);
-  }
-
-  isPhoneValid(): boolean {
-    return /^\d{10}$/.test(this.phoneNumber);
-  }
-
-  // 📤 Send OTP to phone number
-  async sendOtp() {
-    if (!this.isPhoneValid()) {
-      window.alert('Please enter a valid Philippine phone number.');
-      return;
-    }
-    this.loading = true;
-    this.showRecaptcha = true;
-
-    setTimeout(async () => {
-      if (!this.recaptchaVerifier) {
-        this.recaptchaVerifier = new RecaptchaVerifier(
-          getAuth(),
-          'recaptcha-container',
-          {
-            size: 'normal',
-            callback: async (response: any) => {
-              // reCAPTCHA solved, proceed to send OTP
-              try {
-                const fullPhone = '+63' + this.phoneNumber;
-                const auth: Auth = getAuth();
-                this.confirmationResult = await signInWithPhoneNumber(
-                  auth,
-                  fullPhone,
-                  this.recaptchaVerifier!
-                );
-                this.otpSent = true;
-                this.showRecaptcha = false;
-              } catch (error) {
-                window.alert('Failed to send OTP: ' + (error as any).message);
-              } finally {
-                this.loading = false;
-              }
-            },
-            'expired-callback': () => {
-              window.alert('reCAPTCHA expired. Please try again.');
-              this.loading = false;
-              this.showRecaptcha = false;
-            }
-          }
-        );
-        await this.recaptchaVerifier.render();
-      }
-    });
-  }
-
-  // ✅ Verify OTP
-  async verifyOtp() {
-    if (!this.confirmationResult) return;
-    this.loading = true;
-    try {
-      await this.confirmationResult.confirm(this.otp);
-      this.loading = false;
-      this.closePhoneModal();
-      this.router.navigate(['/patient']);
-    } catch (error) {
-      this.loading = false;
-      window.alert('Invalid OTP: ' + (error as any).message);
-    }
-  }
-
-  // 🎯 Role-based redirection
-  private async redirectUser(email: string | null): Promise<void> {
-    if (!email) return;
-
-    // Only admins and HCPs use Google login, patients use phone login (handled in verifyOtp)
-    if (email === this.authService.getAdminEmail()) {
-      this.router.navigate(['/Admin']);
-      return;
-    }
-
-    // Check if email exists in HCP collection
-    try {
-      const hcpQuery = query(
-        collection(this.authService['firestore'], 'HCP'),
-        where('email', '==', email)
-      );
-      const hcpSnapshot = await getDocs(hcpQuery);
-
-      if (!hcpSnapshot.empty) {
-        this.router.navigate(['/HCP']);
-      } else {
-        window.alert('Your email is not registered as a Health Care Provider.');
-      }
-    } catch (error) {
-      window.alert('Error checking HCP records: ' + (error as any).message);
-    } finally {
-      this.navigating = false;
-    }
-  }
-
-
-  send() {
-    const testNumber = '09307189349';
-    const testMessage = 'test successful how are you?';
-    this.smsService.sendSms(testNumber, testMessage).subscribe({
-      next: (res: any) => this.response = `Success: ${JSON.stringify(res)}`,
-      error: (err: { error: any; }) => this.response = `Error: ${JSON.stringify(err.error)}`
-    });
-  }
+  ngOnInit() {}
 
   async loginWithEmail() {
     this.loading = true;
@@ -245,12 +34,20 @@ export class LoginComponent implements OnInit {
       // Check admin collection
       const adminQuery = query(
         collection(this.authService['firestore'], 'admin'),
-        where('email', '==', this.email),
+        where('username', '==', this.username),
         where('password', '==', this.password)
       );
       const adminSnapshot = await getDocs(adminQuery);
 
       if (!adminSnapshot.empty) {
+        // Save admin auth details
+        const adminData = adminSnapshot.docs[0].data();
+        this.authService.setAuthUser({
+          id: adminSnapshot.docs[0].id,
+          username: adminData['username'],
+          name: adminData['name'],
+          role: 'admin',
+        });
         this.router.navigate(['/Admin']);
         return;
       }
@@ -258,17 +55,25 @@ export class LoginComponent implements OnInit {
       // Check HCP collection
       const hcpQuery = query(
         collection(this.authService['firestore'], 'HCP'),
-        where('email', '==', this.email),
+        where('username', '==', this.username),
         where('password', '==', this.password)
       );
       const hcpSnapshot = await getDocs(hcpQuery);
 
       if (!hcpSnapshot.empty) {
+        // Save HCP auth details
+        const hcpData = hcpSnapshot.docs[0].data();
+        this.authService.setAuthUser({
+          id: hcpSnapshot.docs[0].id,
+          username: hcpData['username'],
+          name: hcpData['name'],
+          role: 'hcp',
+        });
         this.router.navigate(['/HCP']);
         return;
       }
 
-      window.alert('Invalid email or password.');
+      window.alert('Invalid username or password.');
     } catch (error) {
       window.alert('Login error: ' + (error as any).message);
     } finally {

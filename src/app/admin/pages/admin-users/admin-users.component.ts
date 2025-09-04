@@ -6,9 +6,9 @@ import { CommonModule } from '@angular/common';
 
 interface HCPUser {
   id?: string;
-  email: string;
+  username: string;
   name: string;
-  password?: string; // Add password field
+  password?: string;
 }
 
 @Component({
@@ -16,7 +16,7 @@ interface HCPUser {
   templateUrl: './admin-users.component.html',
   styleUrl: './admin-users.component.scss',
   standalone: true,
-  imports: [FormsModule,CommonModule, ReactiveFormsModule]
+  imports: [FormsModule, CommonModule, ReactiveFormsModule]
 })
 export class AdminUsersComponent implements OnInit {
   users$: Observable<HCPUser[]>;
@@ -28,9 +28,9 @@ export class AdminUsersComponent implements OnInit {
     const hcpCollection = collection(this.firestore, 'HCP');
     this.users$ = collectionData(hcpCollection, { idField: 'id' }) as Observable<HCPUser[]>;
     this.userForm = this.fb.group({
-      email: ['', [Validators.required, Validators.email]],
+      username: ['', Validators.required],
       name: ['', Validators.required],
-      password: ['', Validators.required] // Add password control
+      password: ['', Validators.required]
     });
   }
 
@@ -45,10 +45,10 @@ export class AdminUsersComponent implements OnInit {
       if (this.editingUser) {
         // Update
         const userDoc = doc(this.firestore, 'HCP', this.editingUser.id!);
-        await updateDoc(userDoc, { email: value.email, name: value.name, password: value.password });
+        await updateDoc(userDoc, { username: value.username, name: value.name, password: value.password });
       } else {
         // Add
-        await addDoc(hcpCollection, { email: value.email, name: value.name, password: value.password });
+        await addDoc(hcpCollection, { username: value.username, name: value.name, password: value.password });
       }
       this.cancelEdit();
     } finally {
@@ -58,7 +58,7 @@ export class AdminUsersComponent implements OnInit {
 
   editUser(user: HCPUser) {
     this.editingUser = user;
-    this.userForm.setValue({ email: user.email, name: user.name, password: user.password ?? '' });
+    this.userForm.setValue({ username: user.username, name: user.name, password: user.password ?? '' });
   }
 
   cancelEdit() {

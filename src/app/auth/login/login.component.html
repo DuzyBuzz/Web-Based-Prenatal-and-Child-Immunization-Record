@@ -1,4 +1,4 @@
-<div class="flex min-h-screen bg relative"> <!-- Add relative for spinner overlay -->
+<div class="flex min-h-screen bg relative">
 
   <!-- Left Side - Background Image Section -->
   <div
@@ -12,14 +12,8 @@
 
     <!-- Image Container -->
     <div class="w-48 flex justify-center mb-6 rounded-3xl">
-      <button  class="btn btn-primary w-full">
-        <!-- (click)="send()" -->
       <img src="assets/images/immune-system.png" alt="Immune System" class="h-auto">
-      </button>
-      <!-- <pre>{{ response }}</pre> -->
-
     </div>
-
 
     <h2 class="text-5xl font-extrabold mb-4 text-teal-700 text-center">
       Web-Based Prenatal and Child Immunization Record
@@ -32,13 +26,12 @@
     <p class="text-wrap text-gray-600 mb-20 text-center">
       A powerful and secure immunization tracking system designed for efficiency, compliance, and patient care.
     </p>
-    <p class="text-gray-500 mb-6 font-black">Choose Login Method</p>
-    <p class="text-gray-500 mb-3 font-medium">Login For Health Care Provider</p>
+    <p class="text-gray-500 mb-6 font-black">Login</p>
 
-    <!-- Google Sign-In Button -->
-         <form (ngSubmit)="loginWithEmail()" class="mb-6 w-60 bg-white rounded-lg shadow p-4">
-      <label for="email" class="block text-gray-700 font-semibold mb-2">Email</label>
-      <input id="email" [(ngModel)]="email" name="email" type="email"
+    <!-- Email/Username Login Form -->
+    <form (ngSubmit)="loginWithEmail()" class="mb-6 w-60 bg-white rounded-lg shadow p-4">
+      <label for="username" class="block text-gray-700 font-semibold mb-2">Username</label>
+      <input id="username" [(ngModel)]="username" name="username" type="text"
         class="w-full border border-gray-300 rounded px-3 py-2 mb-3 focus:outline-none focus:ring-2 focus:ring-blue-400" required />
 
       <label for="password" class="block text-gray-700 font-semibold mb-2">Password</label>
@@ -47,98 +40,15 @@
 
       <button type="submit" [disabled]="loading"
         class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition">
-        Login with Email
+        Login
       </button>
     </form>
-    <button (click)="loginWithGoogle()"
-      class="flex items-center justify-center mb-6 w-60 p-3 rounded-lg border border-gray-300 bg-white text-gray-700 font-medium hover:bg-gray-100 transition-all shadow-sm"
-      [disabled]="loading">
-      <img src="assets/images/google.png" class="w-10 h-10 mr-3" alt="Google">
-      <span *ngIf="!loading">Login with Google</span>
-      <span *ngIf="loading">Signing in...</span>
-    </button>
-    <p class="text-gray-500 mb-1 font-medium">Login for Patient</p>
-    <!-- Facebook Sign-In Button -->
-    <button (click)="loginWithPhone()"
-      class="flex items-center justify-center w-60 p-3 mt-4 rounded-lg border border-blue-500 bg-blue-600 text-white font-medium hover:bg-blue-700 transition-all shadow-sm"
-      [disabled]="loading">
-
-      <img src="assets/images/telephone.png" class="w-8 h-8 mr-3" alt="Telephone">
-      Login with Phone
-    </button>
-
-    <div *ngIf="showPhoneAuth" class="mt-6 w-60 bg-white rounded-lg shadow p-4">
-      <label for="phone" class="block text-gray-700 font-semibold mb-2">Phone Number</label>
-      <input id="phone" [(ngModel)]="phoneNumber" type="tel" placeholder="+639XXXXXXXXX"
-        class="w-full border border-gray-300 rounded px-3 py-2 mb-3 focus:outline-none focus:ring-2 focus:ring-blue-400" />
-
-      <div id="recaptcha-container" class="mb-3"></div>
-
-      <div *ngIf="!otpSent">
-        <button (click)="sendOtp()" [disabled]="loading || !phoneNumber"
-          class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition mb-2">
-          Send OTP
-        </button>
-      </div>
-
-      <div *ngIf="otpSent">
-        <label for="otp" class="block text-gray-700 font-semibold mb-2">Enter OTP</label>
-        <input id="otp" [(ngModel)]="otp" type="text" maxlength="6"
-          class="w-full border border-gray-300 rounded px-3 py-2 mb-3 focus:outline-none focus:ring-2 focus:ring-blue-400" />
-        <button (click)="verifyOtp()" [disabled]="loading || !otp"
-          class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition">
-          Verify OTP
-        </button>
-      </div>
-    </div>
-
 
   </div>
 
-<app-spinnner
-[navigating]="navigating"
-[spinnerMessage]="spinnerMessage">
-
-</app-spinnner>
-
-<!-- Add this modal at the end of your template -->
-<div *ngIf="showPhoneModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-  <div class="bg-white rounded-lg shadow-lg p-6 w-80">
-    <h2 class="text-lg font-bold mb-4 text-center">Patient Phone Login</h2>
-    <label for="phone" class="block text-gray-700 font-semibold mb-2">Phone Number</label>
-    <div class="flex items-center mb-3">
-      <span class="px-2 py-2 bg-gray-200 rounded-l">+63</span>
-      <input
-        id="phone"
-        type="tel"
-        maxlength="10"
-        [(ngModel)]="phoneNumber"
-        (input)="onPhoneInput()"
-        placeholder="9000000000"
-        class="w-full border border-gray-300 rounded-r px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-      />
-    </div>
-    <button
-      (click)="sendOtp()"
-      [disabled]="!isPhoneValid() || loading"
-      class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition mb-2"
-    >
-      Send OTP
-    </button>
-    <button (click)="closePhoneModal()" class="w-full bg-gray-300 text-gray-700 py-2 rounded hover:bg-gray-400 transition">
-      Cancel
-    </button>
-    <div id="recaptcha-container" *ngIf="showRecaptcha" class="mt-3"></div>
-    <div *ngIf="otpSent" class="mt-3">
-      <label for="otp" class="block text-gray-700 font-semibold mb-2">Enter OTP</label>
-      <input id="otp" [(ngModel)]="otp" type="text" maxlength="6"
-        class="w-full border border-gray-300 rounded px-3 py-2 mb-3 focus:outline-none focus:ring-2 focus:ring-blue-400" />
-      <button (click)="verifyOtp()" [disabled]="loading || !otp"
-        class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition">
-        Verify OTP
-      </button>
-    </div>
-  </div>
-</div>
+  <app-spinnner
+    [navigating]="navigating"
+    [spinnerMessage]="spinnerMessage">
+  </app-spinnner>
 
 </div>

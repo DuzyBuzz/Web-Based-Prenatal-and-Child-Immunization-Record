@@ -8,12 +8,20 @@ import { Router } from '@angular/router';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
+export interface AuthUser {
+  id: string;
+  username: string;
+  name: string;
+  role: 'admin' | 'hcp';
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
   private userSubject = new BehaviorSubject<User | null>(null);
   private loadingSubject = new BehaviorSubject<boolean>(false);
+  private authUserSubject = new BehaviorSubject<AuthUser | null>(null);
 
   constructor(
     private auth: Auth,
@@ -160,11 +168,35 @@ export class AuthService {
   async getCurrentUserName(): Promise<string | null> {
     const uid = await this.getCurrentUserId();
     if (!uid) return null;
-    const userDocRef = doc(this.firestore, 'users', uid);
+    const userDocRef = doc(this.firestore, 'HCP', uid);
     const docSnap = await getDoc(userDocRef);
     if (docSnap.exists()) {
       return docSnap.data()['name'] || null;
     }
     return null;
+  }
+
+  setAuthUser(user: AuthUser) {
+    this.authUserSubject.next(user);
+    localStorage.setItem('authUser', JSON.stringify(user));
+  }
+
+  getAuthUser(): AuthUser | null {
+    if (!this.authUserSubject.value) {
+      const user = localStorage.getItem('authUser');
+      if (user) {
+        this.authUserSubject.next(JSON.parse(user));
+      }
+    }
+    return this.authUserSubject.value;
+  }
+
+  clearAuthUser() {
+    this.authUserSubject.next(null);
+    localStorage.removeItem('authUser');
+  }
+
+  getAuthUser$(): Observable<AuthUser | null> {
+    return this.authUserSubject.asObservable();
   }
 }

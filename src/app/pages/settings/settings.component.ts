@@ -1,9 +1,8 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+import { Firestore, doc, getDoc, updateDoc, collection, query, where, getDocs } from '@angular/fire/firestore';
 import { AuthService } from '../../auth/auth.service';
-import { Firestore, doc, getDoc, setDoc } from '@angular/fire/firestore';
-import { firstValueFrom } from 'rxjs';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -13,65 +12,86 @@ import { CommonModule } from '@angular/common';
   styleUrls: ['./settings.component.scss']
 })
 export class SettingsComponent implements OnInit {
-  settingsForm: FormGroup;
-  uid: string | null = null;
+  accountForm: FormGroup;
   loading = false;
-  userEmail: string = '';
-  userPhotoUrl: string = ''; // <-- Add this
+  userId: string | null = null;
+  userRole: 'admin' | 'hcp' | null = null;
 
   constructor(
     private fb: FormBuilder,
+    private firestore: Firestore,
     private authService: AuthService,
-    private firestore: Firestore
+    private router: Router
   ) {
-    this.settingsForm = this.fb.group({
-      notificationEmail: [''],
-      notificationSMS: [false],
-      calendarView: ['month'],
-      theme: ['light'],
-      enableReminders: [true]
+    this.accountForm = this.fb.group({
+      username: ['', Validators.required],
+      name: ['', Validators.required],
+      newPassword: [''],
+      confirmPassword: [''],
+      currentPassword: ['', Validators.required]
     });
   }
 
   async ngOnInit() {
-    this.loading = true;
-
-    // Get user from Auth
-    const user = await firstValueFrom(this.authService.getCurrentUser());
-    this.userEmail = user?.email ?? '';
-    this.userPhotoUrl = user?.photoURL ?? ''; // <-- Set photoURL
-
-    this.uid = user?.uid ?? null;
-    if (this.uid) {
-      const userDocRef = doc(this.firestore, 'users', this.uid);
-      const docSnap = await getDoc(userDocRef);
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        this.settingsForm.patchValue({
-          notificationEmail: this.userEmail, // Always use Auth email
-          notificationSMS: data['notificationSMS'] ?? false,
-          calendarView: data['calendarView'] || 'month',
-          theme: data['theme'] || 'light',
-          enableReminders: data['enableReminders'] ?? true
-        });
-      } else {
-        // If no doc, still set the email
-        this.settingsForm.patchValue({
-          notificationEmail: this.userEmail
-        });
-      }
+    const user = this.authService.getAuthUser();
+    if (!user) {
+      this.router.navigate(['/login']);
+      return;
     }
-    this.loading = false;
+    this.userId = user.id;
+    this.userRole = user.role;
+    // Fetch current user data
+    const docRef = doc(this.firestore, user.role === 'admin' ? 'admin' : 'HCP', this.userId);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      this.accountForm.patchValue({
+        username: data['username'] || '',
+        name: data['name'] || ''
+      });
+    }
   }
 
-  async saveSettings() {
-    if (!this.uid) return;
+  async updateAccount() {
+    if (this.accountForm.invalid) return;
+    const { username, name, newPassword, confirmPassword, currentPassword } = this.accountForm.value;
     this.loading = true;
-    const userDocRef = doc(this.firestore, 'users', this.uid);
-    await setDoc(userDocRef, {
-      ...this.settingsForm.value
-    }, { merge: true });
-    this.loading = false;
-    alert('Settings saved and linked to your Google account!');
+
+    try {
+      // 1. Verify current password
+      const userCollection = collection(this.firestore, this.userRole === 'admin' ? 'admin' : 'HCP');
+      const userQuery = query(
+        userCollection,
+        where('username', '==', username),
+        where('password', '==', currentPassword)
+      );
+      const userSnapshot = await getDocs(userQuery);
+      if (userSnapshot.empty) {
+        alert('Current password is incorrect.');
+        this.loading = false;
+        return;
+      }
+
+      // 2. Check new password confirmation
+      if (newPassword && newPassword !== confirmPassword) {
+        alert('New password and confirmation do not match.');
+        this.loading = false;
+        return;
+      }
+
+      // 3. Update user document
+      const userDoc = doc(this.firestore, this.userRole === 'admin' ? 'admin' : 'HCP', this.userId!);
+      const updateData: any = { username, name };
+      if (newPassword) updateData.password = newPassword;
+      await updateDoc(userDoc, updateData);
+
+      alert('Account updated successfully. Please log in again.');
+      this.authService.clearAuthUser();
+      this.router.navigate(['/login']);
+    } catch (error) {
+      alert('Error updating account: ' + (error as any).message);
+    } finally {
+      this.loading = false;
+    }
   }
 }

@@ -1,44 +1,29 @@
 <div class="max-w-xl mx-auto mt-10 bg-white rounded-lg shadow-lg p-8">
-  <h2 class="text-2xl font-bold text-teal-700 mb-6 text-center">System Settings</h2>
-  <div class="flex flex-col items-center mb-4">
-    <img
-      *ngIf="userPhotoUrl"
-      [src]="userPhotoUrl"
-      alt="Profile Photo"
-      class="w-20 h-20 rounded-full shadow border-2 border-teal-400 mb-2 object-cover"
-    />
-    <div *ngIf="userEmail" class="text-center text-gray-600">
-       {{ userEmail }}
-    </div>
-    <a
-      href="https://myaccount.google.com/personal-info"
-      target="_blank"
-      rel="noopener"
-      class="mt-3 inline-block px-4 py-2 bg-sky-600 text-white rounded shadow hover:bg-sky-700 transition font-semibold"
-    >
-      Account Info
-    </a>
-  </div>
-  <form [formGroup]="settingsForm" (ngSubmit)="saveSettings()" class="space-y-5">
+  <h2 class="text-2xl font-bold text-black mb-6 text-center">Account Settings</h2>
+  <form [formGroup]="accountForm" (ngSubmit)="updateAccount()" class="space-y-5">
     <div>
-      <label class="block font-medium mb-1">Notification Email</label>
-      <input type="email" readonly formControlName="notificationEmail" class="w-full border rounded px-3 py-2" placeholder="your@email.com">
-    </div>
-    <div class="flex items-center">
-      <input type="checkbox" formControlName="notificationSMS" id="sms" class="mr-2">
-      <label for="sms" class="font-medium">Enable SMS Notifications</label>
+      <label class="block font-medium mb-1 text-black">Username</label>
+      <input type="text" formControlName="username" class="w-full border border-black rounded px-3 py-2 text-black bg-white" placeholder="Username">
     </div>
     <div>
-      <label class="block font-medium mb-1">Theme</label>
-      <select formControlName="theme" class="w-full border rounded px-3 py-2">
-        <option value="light">Light</option>
-        <option value="dark">Dark</option>
-      </select>
+      <label class="block font-medium mb-1 text-black">Name</label>
+      <input type="text" formControlName="name" class="w-full border border-black rounded px-3 py-2 text-black bg-white" placeholder="Full Name">
     </div>
-    <div class="flex items-center">
-      <input type="checkbox" formControlName="enableReminders" id="reminders" class="mr-2">
-      <label for="reminders" class="font-medium">Enable Appointment Reminders</label>
+    <div>
+      <label class="block font-medium mb-1 text-black">Current Password <span class="text-red-500">*</span></label>
+      <input type="password" formControlName="currentPassword" class="w-full border border-black rounded px-3 py-2 text-black bg-white" placeholder="Current Password" required>
     </div>
-    <button type="submit" class="w-full py-3 bg-teal-600 text-white rounded font-semibold hover:bg-teal-700 transition">Save Settings</button>
+    <div>
+      <label class="block font-medium mb-1 text-black">New Password</label>
+      <input type="password" formControlName="newPassword" class="w-full border border-black rounded px-3 py-2 text-black bg-white" placeholder="New Password">
+    </div>
+    <div>
+      <label class="block font-medium mb-1 text-black">Confirm New Password</label>
+      <input type="password" formControlName="confirmPassword" class="w-full border border-black rounded px-3 py-2 text-black bg-white" placeholder="Confirm New Password">
+    </div>
+
+    <button type="submit" [disabled]="accountForm.invalid || loading" class="w-full py-3 bg-black text-white rounded font-semibold hover:bg-gray-900 transition">
+      Save Changes
+    </button>
   </form>
 </div>

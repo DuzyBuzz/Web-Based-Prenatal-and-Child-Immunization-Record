@@ -1,13 +1,12 @@
 import { AuthService } from '../../../auth/auth.service';
 import { SmsService } from './../../../services/sms.service';
 import { CommonModule } from '@angular/common';
-import { Component, NgModule, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Firestore, collection, addDoc, doc, getDoc, updateDoc, query, where, getDocs } from '@angular/fire/firestore';
 import { FormsModule, NgForm } from '@angular/forms';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 
-@Component(
-  {
+@Component({
   selector: 'app-childrenimmunizationform',
   imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './childrenimmunizationform.component.html',
@@ -17,22 +16,13 @@ export class ChildrenimmunizationformComponent implements OnInit {
   formData: any = {}; // Holds all form values
   response = '';
 
-  // Allow only numeric input for contact number field
-  allowOnlyNumbers(event: KeyboardEvent): void {
-    const charCode = event.which ? event.which : event.keyCode;
-    // Allow only numbers (0-9)
-    if (charCode < 48 || charCode > 57) {
-      event.preventDefault();
-    }
-  }
-
   today = new Date();
   now: Date | undefined;
   showFormError = false;
   childId: string | null = null;
   message: string = '';
   messageType: 'info' | 'success' | 'warning' | 'error' = 'info';
-  isLoading = false; // Add loading state
+  isLoading = false;
   showModal = false;
   modalMessage = '';
   modalType: 'info' | 'success' | 'warning' | 'error' = 'info';
@@ -40,19 +30,20 @@ export class ChildrenimmunizationformComponent implements OnInit {
   constructor(
     private firestore: Firestore,
     private smsService: SmsService,
-    private authService: AuthService, // Inject AuthService
-    private router: Router, // Inject Router for navigation
+    private authService: AuthService,
+    private router: Router,
     private route: ActivatedRoute
   ) {
     this.setBhwName();
   }
+
   async ngOnInit(): Promise<void> {
-    this.showFormError = true; // Mark all required fields as red on load
+    this.showFormError = true;
     setInterval(() => {
       this.now = new Date();
     }, 1000);
 
-    // Initialize vaccines structure
+    // Initialize vaccines
     this.formData.vaccines = this.formData.vaccines || {};
     for (const vaccine of this.vaccines) {
       if (!this.formData.vaccines[vaccine.id]) {
@@ -63,13 +54,14 @@ export class ChildrenimmunizationformComponent implements OnInit {
       }
     }
 
+    // Load child record if editing
     this.childId = this.route.snapshot.paramMap.get('childId');
     if (this.childId) {
       const childDocRef = doc(this.firestore, 'immunization', this.childId);
       const childSnap = await getDoc(childDocRef);
       if (childSnap.exists()) {
         this.formData = { ...this.formData, ...childSnap.data() };
-        // Re-initialize vaccines if missing
+        // Re-init vaccines if missing
         this.formData.vaccines = this.formData.vaccines || {};
         for (const vaccine of this.vaccines) {
           if (!this.formData.vaccines[vaccine.id]) {
@@ -83,11 +75,15 @@ export class ChildrenimmunizationformComponent implements OnInit {
     }
   }
 
-
   async setBhwName() {
-    const name = await this.authService.getCurrentUserName();
-    if (name) {
-      this.formData.bhw = name;
+    // Load HCP name into BHW input using logic similar to settings.component.ts
+    const user = this.authService.getAuthUser();
+    if (!user) return;
+    const docRef = doc(this.firestore, user.role === 'admin' ? 'admin' : 'HCP', user.id);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      this.formData.bhw = data['name'] || '';
     }
   }
 
@@ -107,67 +103,20 @@ export class ChildrenimmunizationformComponent implements OnInit {
       control.markAsTouched();
     });
   }
+// ✅ Print + Save
+async printAndSaveOrUpdateITR(form: NgForm): Promise<void> {
+  // Ensure form is passed properly
+  if (!form) return;
 
-  async printAndSaveOrUpdateITR(form: NgForm) {
-    this.markAllFieldsAsDirty(form);
-    this.showFormError = false;
-    if (form && form.invalid) {
-      form.control.markAllAsTouched();
-      this.showFormError = true;
+  // Call save method first
+  await this.onSubmit(form);
 
-      // Focus all invalid inputs
-      setTimeout(() => {
-        const invalidInputs = document.querySelectorAll(
-          'input.ng-invalid, select.ng-invalid, textarea.ng-invalid'
-        );
-        invalidInputs.forEach((input: Element) => {
-          (input as HTMLElement).focus();
-        });
-      }, 0);
+  // Then print
+  window.print();
+}
 
-      return;
-    }
 
-    try {
-      const immunizationCollection = collection(this.firestore, 'immunization');
-      const q = query(immunizationCollection, where('name', '==', this.formData.name));
-      const querySnapshot = await getDocs(q);
-
-      if (!this.childId && !querySnapshot.empty) {
-        this.showModalMessage('Patient already exists. Please search for the patient and edit the details.', 'warning');
-        this.isLoading = false;
-        return;
-      }
-
-      let printed = false;
-      const afterPrintHandler = async () => {
-        if (!printed) return;
-        window.removeEventListener('afterprint', afterPrintHandler);
-
-        try {
-          if (this.childId) {
-            await this.updateImmunization(this.childId, this.formData, false);
-            this.showModalMessage('Immunization record updated successfully!', 'success');
-          } else {
-            await this.saveImmunization(this.formData, false);
-            this.showModalMessage('Immunization record saved successfully!', 'success');
-          }
-        } catch (error) {
-          this.showModalMessage('An error occurred while saving the record. Please try again.', 'error');
-        }
-      };
-
-      window.addEventListener('afterprint', afterPrintHandler);
-      printed = true;
-      window.print();
-    } catch (error) {
-      this.showModalMessage('Error checking for duplicate: ' + (error as any).message, 'error');
-      this.isLoading = false;
-    }
-  }
-
-  // Update your onSubmit to NOT print, just save
-  async onSubmit(form: any) {
+  async onSubmit(form: NgForm) {
     this.showFormError = false;
     if (form && form.invalid) {
       form.control.markAllAsTouched();
@@ -181,57 +130,44 @@ export class ChildrenimmunizationformComponent implements OnInit {
       const q = query(immunizationCollection, where('name', '==', this.formData.name));
       const querySnapshot = await getDocs(q);
 
-      if (!querySnapshot.empty) {
+      if (!this.childId && !querySnapshot.empty) {
         this.showModalMessage('A record for this patient already exists. Please use the search feature to find and update the existing record.', 'warning');
         this.isLoading = false;
         return;
       }
 
-      const uid = await this.authService.getCurrentUserId();
-      const nurseName = await this.authService.getCurrentUserName();
+  const uid = await this.authService.getCurrentUserId();
+  // Save the value from the BHW input as nurseName
+  this.formData.SecondWednesdayNextMonth = this.getSecondWednesdayNextMonth();
+  this.formData.createdDate = new Date().toISOString();
+  this.formData.uid = uid;
+  this.formData.nurseName = this.formData.bhw;
 
-      this.formData.SecondWednesdayNextMonth = this.getSecondWednesdayNextMonth();
-      this.formData.createdDate = new Date().toISOString();
-      this.formData.uid = uid;
-      this.formData.nurseName = nurseName;
+  await addDoc(immunizationCollection, this.formData);
 
-      await addDoc(immunizationCollection, this.formData);
-
-      // Compose SMS
+      // --- SMS logic ---
       const contact = this.formData.contact;
       const nextImmunization = this.getSecondWednesdayNextMonth();
       const message =
-        `Good day ${this.formData.mother}, ` +
-        `Next Immunization for ${this.formData.name} is on ${nextImmunization}. ` +
-        `Expect reminder on the day of your appointment.`;
+        `Good day ${this.formData.mother}, Next Immunization for ${this.formData.name} is on ${nextImmunization}. Expect reminder on the day of your appointment.`;
 
       if (contact) {
-        // 1. Send immediate SMS
+        // Immediate SMS
         this.smsService.sendSms(contact, message).subscribe({
-          next: (res: any) => {
-            this.response = `Success: ${JSON.stringify(res)}`;
-            console.log("Immediate SMS sent successfully:", res);
-          },
-          error: (err: { error: any; }) => {
-            this.response = `Error: ${JSON.stringify(err.error)}`;
-            console.error("Immediate SMS failed:", err.error);
-          }
+          next: (res: any) => console.log("Immediate SMS sent:", res),
+          error: (err: { error: any }) => console.error("Immediate SMS failed:", err.error)
         });
 
-        // 2. Schedule SMS for SecondWednesdayNextMonth at 3 AM
+        // Scheduled SMS
         const scheduledAt = this.getSecondWednesdayNextMonthAt3AMString();
-        const scheduledMessage =
-          `Reminder: Immunization for ${this.formData.name} is today (${nextImmunization}). Please visit the health center.`;
+        const scheduledMessage = `Reminder: Immunization for ${this.formData.name} is today (${nextImmunization}). Please visit the health center.`;
 
-        this.smsService.sendSms(contact, scheduledMessage, scheduledAt).subscribe({
-          next: (res: any) => {
-            console.log("Scheduled SMS sent successfully:", res);
-          },
-          error: (err: { error: any; }) => {
-            console.error("Scheduled SMS failed:", err.error);
-          }
+        this.smsService.scheduleSmsReminder(contact, scheduledMessage, scheduledAt).subscribe({
+          next: (res: any) => console.log("Scheduled SMS set:", res),
+          error: (err: { error: any }) => console.error("Scheduled SMS failed:", err.error)
         });
       }
+      // --- End SMS logic ---
 
       this.showModalMessage('Immunization record saved successfully!', 'success');
       this.isLoading = false;
@@ -251,40 +187,29 @@ export class ChildrenimmunizationformComponent implements OnInit {
     data.SecondWednesdayNextMonth = this.getSecondWednesdayNextMonth();
     await addDoc(collection(this.firestore, 'immunization'), data);
 
-    // --- SMS sending logic here ---
+    // --- SMS logic ---
     const contact = data.contact;
     const nextImmunization = this.getSecondWednesdayNextMonth();
     const message =
-      `Good day ${data.mother}, ` +
-      `Next Immunization for ${data.name} is on ${nextImmunization}. ` +
-      `Expect reminder on the day of your appointment.`;
+      `Good day ${data.mother}, Next Immunization for ${data.name} is on ${nextImmunization}. Expect reminder on the day of your appointment.`;
 
     if (contact) {
-      // 1. Send immediate SMS
+      // Immediate SMS
       this.smsService.sendSms(contact, message).subscribe({
-        next: (res: any) => {
-          console.log("Immediate SMS sent successfully:", res);
-        },
-        error: (err: { error: any; }) => {
-          console.error("Immediate SMS failed:", err.error);
-        }
+        next: (res: any) => console.log("Immediate SMS sent:", res),
+        error: (err: { error: any }) => console.error("Immediate SMS failed:", err.error)
       });
 
-      // 2. Schedule SMS for SecondWednesdayNextMonth at 3 AM
+      // Scheduled SMS
       const scheduledAt = this.getSecondWednesdayNextMonthAt3AMString();
-      const scheduledMessage =
-        `Reminder: Immunization for ${data.name} is today (${nextImmunization}). Please visit the health center.`;
+      const scheduledMessage = `Reminder: Immunization for ${data.name} is today (${nextImmunization}). Please visit the health center.`;
 
-      this.smsService.sendSms(contact, scheduledMessage, scheduledAt).subscribe({
-        next: (res: any) => {
-          console.log("Scheduled SMS sent successfully:", res);
-        },
-        error: (err: { error: any; }) => {
-          console.error("Scheduled SMS failed:", err.error);
-        }
+      this.smsService.scheduleSmsReminder(contact, scheduledMessage, scheduledAt).subscribe({
+        next: (res: any) => console.log("Scheduled SMS set:", res),
+        error: (err: { error: any }) => console.error("Scheduled SMS failed:", err.error)
       });
     }
-    // --- end SMS logic ---
+    // --- End SMS logic ---
 
     if (showModal) {
       this.showModalMessage('Immunization record saved successfully!', 'success');
@@ -302,111 +227,45 @@ export class ChildrenimmunizationformComponent implements OnInit {
     const docRef = doc(this.firestore, 'immunization', id);
     await updateDoc(docRef, data);
 
-    // --- SMS sending logic here ---
+    // --- SMS logic ---
     const contact = data.contact;
     const nextImmunization = this.getSecondWednesdayNextMonth();
     const message =
-      `Good day ${data.mother}, ` +
-      `Next Immunization for ${data.name} is on ${nextImmunization}. ` +
-      `Expect reminder on the day of your appointment.`;
+      `Good day ${data.mother}, Next Immunization for ${data.name} is on ${nextImmunization}. Expect reminder on the day of your appointment.`;
 
     if (contact) {
-      // 1. Send immediate SMS
+      // Immediate SMS
       this.smsService.sendSms(contact, message).subscribe({
-        next: (res: any) => {
-          console.log("Immediate SMS sent successfully:", res);
-        },
-        error: (err: { error: any; }) => {
-          console.error("Immediate SMS failed:", err.error);
-        }
+        next: (res: any) => console.log("Immediate SMS sent:", res),
+        error: (err: { error: any }) => console.error("Immediate SMS failed:", err.error)
       });
 
-      // 2. Schedule SMS for SecondWednesdayNextMonth at 3 AM
+      // Scheduled SMS
       const scheduledAt = this.getSecondWednesdayNextMonthAt3AMString();
-      const scheduledMessage =
-        `Reminder: Immunization for ${data.name} is today (${nextImmunization}). Please visit the health center.`;
+      const scheduledMessage = `Reminder: Immunization for ${data.name} is today (${nextImmunization}). Please visit the health center.`;
 
-      this.smsService.sendSms(contact, scheduledMessage, scheduledAt).subscribe({
-        next: (res: any) => {
-          console.log("Scheduled SMS sent successfully:", res);
-        },
-        error: (err: { error: any; }) => {
-          console.error("Scheduled SMS failed:", err.error);
-        }
+      this.smsService.scheduleSmsReminder(contact, scheduledMessage, scheduledAt).subscribe({
+        next: (res: any) => console.log("Scheduled SMS set:", res),
+        error: (err: { error: any }) => console.error("Scheduled SMS failed:", err.error)
       });
     }
-    // --- end SMS logic ---
+    // --- End SMS logic ---
 
     if (showModal) {
       this.showModalMessage('Immunization record updated successfully!', 'success');
     }
   }
 
-  // Define your vaccines
-vaccines = [
-  {
-    name: 'BCG',
-    schedule: '(at birth)',
-    slots: 2,
-    id: 'bcg'
-  },
-  {
-    name: 'PENTA',
-    schedule: '(6wks,10 wks ,14 wks)',
-    slots: 3,
-    id: 'penta'
-  },
-  {
-    name: 'OPV',
-    schedule: '(6wks,10 wks ,14 wks)',
-    slots: 3,
-    id: 'opv'
-  },
-  {
-    name: 'PCV',
-    schedule: '(6wks,10 wks ,14 wks)',
-    slots: 2,
-    id: 'pcv'
-  },
-  {
-    name: 'IPV',
-    schedule: '(6wks,10 wks ,14 wks)',
-    slots: 2,
-    id: 'ipv'
-  }
-];
-  send() {
-    const phoneNumber = this.formData.contact;
-    const message = '';
-    this.smsService.sendSms(phoneNumber, message).subscribe({
-      next: (res: any) => this.response = `Success: ${JSON.stringify(res)}`,
-      error: (err: { error: any; }) => this.response = `Error: ${JSON.stringify(err.error)}`
-    });
-  }
+  // Vaccine definitions
+  vaccines = [
+    { name: 'BCG', schedule: '(at birth)', slots: 2, id: 'bcg' },
+    { name: 'PENTA', schedule: '(6wks,10wks,14wks)', slots: 3, id: 'penta' },
+    { name: 'OPV', schedule: '(6wks,10wks,14wks)', slots: 3, id: 'opv' },
+    { name: 'PCV', schedule: '(6wks,10wks,14wks)', slots: 2, id: 'pcv' },
+    { name: 'IPV', schedule: '(6wks,10wks,14wks)', slots: 2, id: 'ipv' }
+  ];
 
-  private getSecondWednesdayNextMonth(): string {
-    const now = new Date();
-    const year = now.getMonth() === 11 ? now.getFullYear() + 1 : now.getFullYear();
-    const month = (now.getMonth() + 1) % 12;
-    let count = 0;
-    for (let day = 1; day <= 15; day++) {
-      const date = new Date(year, month, day);
-      if (date.getDay() === 3) { // 3 = Wednesday
-        count++;
-        if (count === 2) {
-          // This returns "July 9, 2025" format
-          return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-        }
-      }
-    }
-    return '';
-  }
-
-  printSection() {
-    window.print();
-  }
-
-  // Add this method
+  // Age calculator
   calculateAgeFromBirthday() {
     if (!this.formData.birthday) {
       this.formData.ageYears = null;
@@ -419,9 +278,7 @@ vaccines = [
     let months = today.getMonth() - birthDate.getMonth();
     const days = today.getDate() - birthDate.getDate();
 
-    if (days < 0) {
-      months--;
-    }
+    if (days < 0) months--;
     if (months < 0) {
       years--;
       months += 12;
@@ -430,46 +287,25 @@ vaccines = [
     this.formData.ageMonths = months >= 0 ? months : 0;
   }
 
-  // Helper to get ISO string for scheduled SMS
-  private getSecondWednesdayNextMonthISO(): string {
+  // Get next 2nd Wednesday
+  private getSecondWednesdayNextMonth(): string {
     const now = new Date();
     const year = now.getMonth() === 11 ? now.getFullYear() + 1 : now.getFullYear();
     const month = (now.getMonth() + 1) % 12;
     let count = 0;
     for (let day = 1; day <= 15; day++) {
       const date = new Date(year, month, day);
-      if (date.getDay() === 3) { // 3 = Wednesday
+      if (date.getDay() === 3) {
         count++;
         if (count === 2) {
-          // Return ISO string for scheduling
-          date.setHours(8, 0, 0, 0); // Set to 8:00 AM, adjust as needed
-          return date.toISOString();
+          return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
         }
       }
     }
     return '';
   }
 
-  // Add this helper method to your component:
-  private getSecondWednesdayNextMonthISO3AM(): string {
-    const now = new Date();
-    const year = now.getMonth() === 11 ? now.getFullYear() + 1 : now.getFullYear();
-    const month = (now.getMonth() + 1) % 12;
-    let count = 0;
-    for (let day = 1; day <= 15; day++) {
-      const date = new Date(year, month, day);
-      if (date.getDay() === 3) { // 3 = Wednesday
-        count++;
-        if (count === 2) {
-          date.setHours(3, 0, 0, 0); // Set to 3:00 AM
-          return date.toISOString();
-        }
-      }
-    }
-    return '';
-  }
-
-  // Add this helper to your component
+  // Format schedule string for SMS API
   private getSecondWednesdayNextMonthAt3AMString(): string {
     const now = new Date();
     const year = now.getMonth() === 11 ? now.getFullYear() + 1 : now.getFullYear();
@@ -477,11 +313,10 @@ vaccines = [
     let count = 0;
     for (let day = 1; day <= 15; day++) {
       const date = new Date(year, month, day);
-      if (date.getDay() === 3) { // 3 = Wednesday
+      if (date.getDay() === 3) {
         count++;
         if (count === 2) {
-          date.setHours(3, 0, 0, 0); // Set to 3:00 AM
-          // Format: YYYY-MM-DD HH:mma
+          date.setHours(3, 0, 0, 0);
           const y = date.getFullYear();
           const m = (date.getMonth() + 1).toString().padStart(2, '0');
           const d = date.getDate().toString().padStart(2, '0');
@@ -496,4 +331,5 @@ vaccines = [
     }
     return '';
   }
+  
 }

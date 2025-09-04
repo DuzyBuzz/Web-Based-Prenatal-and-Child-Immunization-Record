@@ -16,6 +16,10 @@
       Child Immunization Records<br>
       with SMS Notification
     </p>
+    <!-- Display logged-in user name -->
+    <div *ngIf="name" class="mt-4 text-gray-800 font-semibold text-center text-base">
+      {{ name }}
+    </div>
   </div>
   <!-- Navigation -->
   <nav class="flex-1 flex flex-col justify-between px-4 pb-6">
@@ -87,6 +91,10 @@
         Child Immunization Records<br>
         with SMS Notification
       </p>
+    <!-- Display logged-in user name -->
+    <div *ngIf="name" class="mt-4 text-gray-800 font-semibold text-center text-base">
+      {{ name }}
+    </div>
     </div>
     <!-- Navigation -->
     <nav class="flex flex-col gap-2 px-4 pb-6">

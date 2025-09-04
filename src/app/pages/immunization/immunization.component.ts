@@ -141,15 +141,9 @@ export class ImmunizationComponent {
 
 
   openDeleteModal(child: any): void {
-    const currentUserUid = this.auth.currentUser?.uid;
-    if (child.uid !== currentUserUid) {
-      this.showPermissionError = true;
-      return;
-    }
     this.selectedChild = child;
     this.showDeleteModal = true;
     this.showContextMenu = false;
-
   }
 
   // Load children from Firestore and populate user details
@@ -279,19 +273,11 @@ export class ImmunizationComponent {
   }
 
   openEditForm(child: any): void {
-    const currentUserUid = this.auth.currentUser?.uid;
-    if (child.uid !== currentUserUid) {
-      this.showPermissionError = true;
-      return;
-    }
     console.log('Edit', child);
     this.showContextMenu = false;
     // Implement edit logic here
   }
 
-  // Close the permission error modal
-  closePermissionError(): void {
-    this.showPermissionError = false;
-  }
+  // Removed permission error modal logic
 
 }

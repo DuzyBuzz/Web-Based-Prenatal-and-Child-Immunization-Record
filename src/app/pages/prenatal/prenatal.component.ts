@@ -202,15 +202,9 @@ export class PrenatalComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   openDeleteModal(mother: any): void {
-    const currentUserUid = this.auth.currentUser?.uid;
-    if (mother.createdBy !== currentUserUid) {
-      this.showPermissionError = true;
-      return;
-    }
     this.selectedMother = mother;
     this.showDeleteModal = true;
     this.showContextMenu = false;
-
   }
 
   // Load mothers from Firestore and populate user details
@@ -332,19 +326,11 @@ export class PrenatalComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   openEditForm(mother: any): void {
-    const currentUserUid = this.auth.currentUser?.uid;
-    if (mother.createdBy !== currentUserUid) {
-      this.showPermissionError = true;
-      return;
-    }
+    // Permission check removed, always allow edit
     console.log('Edit', mother);
     this.showContextMenu = false;
     // Implement edit logic here
   }
 
-  // Close the permission error modal
-  closePermissionError(): void {
-    this.showPermissionError = false;
-  }
-
+  // Remove showPermissionError and closePermissionError logic
 }

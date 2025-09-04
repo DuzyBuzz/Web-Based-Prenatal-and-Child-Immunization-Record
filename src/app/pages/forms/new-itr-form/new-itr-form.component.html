@@ -1,0 +1,234 @@
+<!-- src/app/prenatal/prenatal-form.component.html -->
+<div class="mx-auto max-w-6xl p-4 sm:p-8">
+  <!-- Header -->
+  <h1 class="text-center text-xl font-semibold tracking-wide">PRE-NATAL INDIVIDUAL TREATMENT RECORD</h1>
+  <p class="text-center text-sm opacity-70">Municipality of Pototan • Province of Iloilo</p>
+
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" class="mt-6 space-y-6">
+
+    <!-- Patient Info -->
+    <section class="rounded border p-4">
+      <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
+        <label class="flex flex-col">
+          <span class="text-xs uppercase">Family Name</span>
+          <input class="input" formControlName="familyName" placeholder="Last name" />
+        </label>
+
+        <label class="flex flex-col">
+          <span class="text-xs uppercase">First Name</span>
+          <input class="input" formControlName="firstName" placeholder="First name" />
+        </label>
+
+        <label class="flex flex-col">
+          <span class="text-xs uppercase">Middle Name</span>
+          <input class="input" formControlName="middleName" placeholder="Middle name" />
+        </label>
+      </div>
+
+      <div class="mt-3 grid grid-cols-1 gap-3 md:grid-cols-3">
+        <label class="flex flex-col md:col-span-2">
+          <span class="text-xs uppercase">Address</span>
+          <input class="input" formControlName="address" placeholder="Barangay, Municipality" />
+        </label>
+
+        <label class="flex flex-col">
+          <span class="text-xs uppercase">Contact Number</span>
+          <input class="input" formControlName="contactNumber" placeholder="09xxxxxxxxx" />
+        </label>
+      </div>
+
+      <div class="mt-3 grid grid-cols-1 gap-3 md:grid-cols-4">
+        <label class="flex flex-col">
+          <span class="text-xs uppercase">Birthday</span>
+          <input class="input" type="date" formControlName="birthday" />
+        </label>
+
+        <label class="flex flex-col">
+          <span class="text-xs uppercase">Age</span>
+          <input class="input bg-gray-50" formControlName="age" placeholder="Auto" readonly />
+        </label>
+
+        <label class="flex flex-col md:col-span-2">
+          <span class="text-xs uppercase">Husband's Name</span>
+          <input class="input" formControlName="husbandsName" placeholder="Husband's name" />
+        </label>
+      </div>
+
+      <div class="mt-3 grid grid-cols-1 gap-3 md:grid-cols-5">
+        <label class="flex flex-col">
+          <span class="text-xs uppercase">LMP</span>
+          <input class="input" type="date" formControlName="lmp" />
+        </label>
+        <label class="flex flex-col">
+          <span class="text-xs uppercase">EDC</span>
+          <input class="input" type="date" formControlName="edc" />
+        </label>
+        <label class="flex flex-col">
+          <span class="text-xs uppercase">G-P</span>
+          <input class="input" formControlName="gp" placeholder="e.g., G1P0" />
+        </label>
+        <label class="flex flex-col">
+          <span class="text-xs uppercase">OB Score</span>
+          <input class="input" formControlName="obScore" />
+        </label>
+        <div class="flex items-end gap-2">
+          <span class="text-xs uppercase shrink-0">PhilHealth:</span>
+          <label class="inline-flex items-center gap-1">
+            <input type="radio" class="accent-current" value="Member" formControlName="philHealthStatus" />
+            <span class="text-sm">Member</span>
+          </label>
+          <label class="inline-flex items-center gap-1">
+            <input type="radio" class="accent-current" value="Dependent" formControlName="philHealthStatus" />
+            <span class="text-sm">Dependent</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="mt-3 grid grid-cols-1 gap-3 md:grid-cols-3">
+        <label class="flex flex-col">
+          <span class="text-xs uppercase">PhilHealth Number</span>
+          <input class="input" formControlName="philHealthNumber" />
+        </label>
+
+        <div class="md:col-span-2 grid grid-cols-5 gap-2">
+          <label class="flex flex-col">
+            <span class="text-xs uppercase">TT1</span>
+            <input class="input" type="date" formControlName="tt1" />
+          </label>
+          <label class="flex flex-col">
+            <span class="text-xs uppercase">TT2</span>
+            <input class="input" type="date" formControlName="tt2" />
+          </label>
+          <label class="flex flex-col">
+            <span class="text-xs uppercase">TT3</span>
+            <input class="input" type="date" formControlName="tt3" />
+          </label>
+          <label class="flex flex-col">
+            <span class="text-xs uppercase">TT4</span>
+            <input class="input" type="date" formControlName="tt4" />
+          </label>
+          <label class="flex flex-col">
+            <span class="text-xs uppercase">TT5</span>
+            <input class="input" type="date" formControlName="tt5" />
+          </label>
+        </div>
+      </div>
+
+      <div class="mt-3">
+        <label class="flex flex-col">
+          <span class="text-xs uppercase">History of Illnesses</span>
+          <textarea class="input min-h-24" formControlName="historyOfIllnesses" placeholder="e.g., hypertension, diabetes"></textarea>
+        </label>
+      </div>
+    </section>
+
+    <!-- Visits / Vital Signs table -->
+    <section class="rounded border p-4">
+      <div class="flex items-center justify-between">
+        <h2 class="font-semibold">Visits • Vital Signs & Findings</h2>
+        <button type="button" class="btn" (click)="addVisit()">+ Add Visit</button>
+      </div>
+
+      <div class="mt-3 overflow-x-auto">
+        <table class="w-full border-collapse text-sm">
+          <thead>
+            <tr class="bg-gray-50">
+              <th class="th">Date</th>
+              <th class="th">AOG</th>
+              <th class="th">Wt</th>
+              <th class="th">B/P</th>
+              <th class="th">HR</th>
+              <th class="th">RR</th>
+              <th class="th">Temp</th>
+              <th class="th">O₂ Sat</th>
+              <th class="th">FH</th>
+              <th class="th">FHB</th>
+              <th class="th">PRES</th>
+              <th class="th">L1</th>
+              <th class="th">L2</th>
+              <th class="th">L3</th>
+              <th class="th">L4</th>
+              <th class="th">Vag Bleeding</th>
+              <th class="th">Pallor</th>
+              <th class="th">Fever</th>
+              <th class="th">Edema</th>
+              <th class="th">Notes / Plan</th>
+              <th class="th"></th>
+            </tr>
+          </thead>
+          <tbody formArrayName="visits">
+            <tr *ngFor="let v of visits.controls; index as i" [formGroupName]="i" class="border-b">
+              <td class="td"><input type="date" class="cell" formControlName="date"></td>
+              <td class="td"><input class="cell" formControlName="aog" placeholder="wks"></td>
+              <td class="td"><input class="cell" formControlName="weight" placeholder="kg"></td>
+              <td class="td"><input class="cell" formControlName="bp" placeholder="mmHg"></td>
+              <td class="td"><input class="cell" formControlName="hr"></td>
+              <td class="td"><input class="cell" formControlName="rr"></td>
+              <td class="td"><input class="cell" formControlName="temp" placeholder="°C"></td>
+              <td class="td"><input class="cell" formControlName="o2sat" placeholder="%"></td>
+              <td class="td"><input class="cell" formControlName="fh"></td>
+              <td class="td"><input class="cell" formControlName="fhb"></td>
+              <td class="td"><input class="cell" formControlName="pres"></td>
+              <td class="td"><input class="cell" formControlName="l1"></td>
+              <td class="td"><input class="cell" formControlName="l2"></td>
+              <td class="td"><input class="cell" formControlName="l3"></td>
+              <td class="td"><input class="cell" formControlName="l4"></td>
+
+              <td class="td">
+                <select class="cell" formControlName="vagBleeding">
+                  <option [ngValue]="null">—</option>
+                  <option value="Yes">Yes</option>
+                  <option value="No">No</option>
+                </select>
+              </td>
+              <td class="td">
+                <select class="cell" formControlName="pallor">
+                  <option [ngValue]="null">—</option>
+                  <option value="Yes">Yes</option>
+                  <option value="No">No</option>
+                </select>
+              </td>
+              <td class="td">
+                <select class="cell" formControlName="fever">
+                  <option [ngValue]="null">—</option>
+                  <option value="Yes">Yes</option>
+                  <option value="No">No</option>
+                </select>
+              </td>
+              <td class="td">
+                <select class="cell" formControlName="edema">
+                  <option [ngValue]="null">—</option>
+                  <option value="Yes">Yes</option>
+                  <option value="No">No</option>
+                </select>
+              </td>
+              <td class="td min-w-56">
+                <input class="cell" formControlName="notes" placeholder="Assessment / Plan / Requests" />
+              </td>
+              <td class="td">
+                <button type="button" class="text-red-600 hover:underline" (click)="removeVisit(i)">Remove</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Submit -->
+    <div class="flex items-center justify-between">
+      <div class="text-sm text-red-600" *ngIf="saveError()">{{ saveError() }}</div>
+      <div class="text-sm text-green-600" *ngIf="saveSuccess()">Saved!</div>
+      <button class="btn-primary" [disabled]="saving()">Save to Firestore</button>
+    </div>
+  </form>
+</div>
+
+<!-- Tailwind helper classes (keep your Tailwind config simple) -->
+<style>
+  .input { @apply w-full rounded border px-3 py-2 outline-none focus:ring; }
+  .btn { @apply rounded border px-3 py-2 text-sm hover:bg-gray-50; }
+  .btn-primary { @apply rounded bg-black px-4 py-2 text-white disabled:opacity-50; }
+  .th { @apply border px-2 py-1 text-left text-xs font-semibold; }
+  .td { @apply border px-1 py-1 align-top; }
+  .cell { @apply w-full rounded border px-2 py-1; }
+</style>

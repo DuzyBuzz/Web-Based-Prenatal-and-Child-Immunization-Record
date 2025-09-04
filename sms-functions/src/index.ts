@@ -9,7 +9,7 @@ app.use(express.json());
 
 app.post("/send-sms", async (req, res) => {
   const { phoneNumber, message, scheduledAt } = req.body;
-  const apiToken = "46a41b56a940789fc2ef1178f6151a79d8639ec4";
+  const apiToken = "46a41b56a940789fc2ef1178f6151a79d8639ec4 ";
 
   if (!phoneNumber || !message) {
     res.status(400).json({ error: "phoneNumber and message are required." });

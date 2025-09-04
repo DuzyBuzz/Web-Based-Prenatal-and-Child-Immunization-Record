@@ -1,5 +1,7 @@
-import { Component, Input } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Component, Input, OnInit } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Auth } from '@angular/fire/auth';
+import { Firestore, doc, getDoc } from '@angular/fire/firestore';
 import { environment } from '../../../environments/environment.development'; // Adjust the path as necessary
 import { AuthService } from '../../auth/auth.service';
 import { Observable } from 'rxjs';
@@ -11,13 +13,33 @@ import { User } from '@angular/fire/auth';
   templateUrl: './left-side-panel.component.html',
   styleUrl: './left-side-panel.component.scss'
 })
-export class LeftSidePanelComponent {
+export class LeftSidePanelComponent implements OnInit {
   @Input() blur = false;
   mobileMenuOpen = false;
-    user$: Observable<User | null>; // Observable for user state
+  user$: Observable<User | null>; // Observable for user state
+  name: string | null = null;
+  userName: string | null = null; // for mobile sidebar
 
-  constructor(private http: HttpClient, private authService: AuthService) {
-        this.user$ = this.authService.getCurrentUser();
+  constructor(private http: HttpClient, private authService: AuthService, private auth: Auth, private firestore: Firestore) {
+    this.user$ = this.authService.getCurrentUser();
+  }
+
+  async ngOnInit() {
+    const user = this.auth.currentUser;
+    if (user) {
+      // Fetch from HCP collection, field is 'name'
+      const docRef = doc(this.firestore, 'HCP', user.uid);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        this.name = data['name'] || null;
+        this.userName = data['name'] || null;
+      }
+    }
+
+    this.authService.getCurrentUserName().then(name => {
+      this.name = name;
+    });
   }
 
   toggleMobileMenu(): void {
@@ -37,7 +59,7 @@ export class LeftSidePanelComponent {
   }
 
   sendSms(): void {
-const url = 'http://127.0.0.1:5001/prenatal-and-immunization/us-central1/sendSms';
+    const url = 'http://127.0.0.1:5001/prenatal-and-immunization/us-central1/sendSms';
 
     const body = {
       to: '+639511365191',
@@ -56,10 +78,9 @@ const url = 'http://127.0.0.1:5001/prenatal-and-immunization/us-central1/sendSms
     });
   }
 
-
-    logout() {
-  if (confirm('Are you sure you want to sign out?')) {
-    this.authService.logout();
+  logout() {
+    if (confirm('Are you sure you want to sign out?')) {
+      this.authService.logout();
+    }
   }
-}
 }

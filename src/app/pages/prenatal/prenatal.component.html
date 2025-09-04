@@ -94,65 +94,10 @@
             </p>
             <p class="text-gray-600 text-sm">Attendant: <span class="font-medium">{{ mother.nurseName || 'N/A' }}</span></p>
 
-            <p class="text-gray-600 text-sm">
-              TT1:
-              <input
-                type="checkbox"
-                [checked]="mother.tti"
-                disabled
-                class="ml-2 accent-gray-800"
-              />
-            </p>
-            <p class="text-gray-600 text-sm">
-              TT2:
-              <input
-                type="checkbox"
-                [checked]="mother.tt2"
-                disabled
-                class="ml-2 accent-gray-800"
-              />
-            </p>
-            <p class="text-gray-600 text-sm">
-              TT3:
-              <input
-                type="checkbox"
-                [checked]="mother.tt3"
-                disabled
-                class="ml-2 accent-gray-800"
-              />
-            </p>
-            <p class="text-gray-600 text-sm">
-              TT4:
-              <input
-                type="checkbox"
-                [checked]="mother.tt4"
-                disabled
-                class="ml-2 accent-gray-800"
-              />
-            </p>
-            <p class="text-gray-600 text-sm">
-              TT5:
-              <input
-                type="checkbox"
-                [checked]="mother.tt5"
-                disabled
-                class="ml-2 accent-gray-800"
-              />
-            </p>
-            <p class="text-gray-600 text-sm">
-              TT2+:
-              <input
-                type="checkbox"
-                [checked]="mother.tt2dash"
-                disabled
-                class="ml-2 accent-gray-800"
-              />
-            </p>
           </div>
 
           <!-- Actions -->
           <div class="relative flex items-center space-x-2">
-            <ng-container *ngIf="mother.createdBy === currentUserUid; else noPermission">
               <button (click)="toggleActionButtons(mother.id)" class="p-2 w-10 h-10 text-gray-700 hover:text-black transition-all duration-300 ease-in-out rounded-full">
                 <span class="text-3xl font-black">
                   {{ selectedMotherId === mother.id ? '‹' : '›' }}
@@ -186,20 +131,9 @@
                   Delete
                 </button>
               </div>
-            </ng-container>
           </div>
 
-          <!-- No Permission message -->
-            <ng-template #noPermission>
-          <span class="relative group cursor-pointer flex items-center">
-            <span class="material-icons text-gray-400 text-2xl">block</span>
-            <span
-              class="absolute right-full top-1/2 -translate-y-1/2 ml-2 px-3 py-2 bg-white text-gray-500 text-xs rounded shadow-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-200 whitespace-nowrap z-10"
-            >
-              You cannot edit or delete this record.
-            </span>
-          </span>
-            </ng-template>
+
 
         </div>
 
@@ -212,52 +146,41 @@
     </app-spinnner>
   </aside>
 
-  <!-- Permission Modal -->
-  <div *ngIf="showPermissionError" class="fixed inset-0 bg-black/50 z-40 flex items-center justify-center transition-opacity duration-300">
+  <!-- Delete Confirmation Modal -->
+  <div *ngIf="showDeleteModal" class="fixed inset-0 bg-black/50 z-40 flex items-center justify-center transition-opacity duration-300">
     <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md text-center">
-      <h2 class="text-gray-800 font-semibold text-lg mb-4">Permission Denied</h2>
-      <p class="text-gray-700">You do not have permission to modify this record.</p>
-      <button (click)="closePermissionError()" class="mt-4 px-6 py-2 bg-gray-700 text-white rounded hover:bg-black transition-colors duration-300">
-        Close
-      </button>
+      <h2 class="text-gray-800 font-semibold text-lg mb-4">Confirm Deletion</h2>
+      <p class="mb-2">Please type the patient's name to confirm deletion:</p>
+
+      <input
+        type="text"
+        [(ngModel)]="confirmName"
+        [placeholder]="selectedMother?.firstName + ' ' + selectedMother?.middleName + ' ' + selectedMother?.lastName"
+        class="w-full border border-gray-300 rounded p-2 mb-4 transition-all duration-300 ease-in-out"
+      />
+
+      <div class="flex justify-center gap-4">
+        <button
+          (click)="closeDeleteModal()"
+          class="px-6 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 transition-colors duration-300"
+        >
+          Cancel
+        </button>
+
+        <button
+          (click)="deleteMother()"
+          [disabled]="confirmName !== selectedMother?.firstName + ' ' + selectedMother?.middleName + ' ' + selectedMother?.lastName"
+          class="px-6 py-2 rounded transition-colors duration-300"
+          [ngClass]="{
+            'bg-black text-white hover:bg-gray-800': confirmName === selectedMother?.firstName + ' ' + selectedMother?.middleName + ' ' + selectedMother?.lastName,
+            'bg-gray-200 text-gray-600 cursor-not-allowed': confirmName !== selectedMother?.firstName + ' ' + selectedMother?.middleName + ' ' + selectedMother?.lastName
+          }"
+        >
+          Delete
+        </button>
+      </div>
     </div>
   </div>
-
-<!-- Delete Confirmation Modal -->
-<div *ngIf="showDeleteModal" class="fixed inset-0 bg-black/50 z-40 flex items-center justify-center transition-opacity duration-300">
-  <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md text-center">
-    <h2 class="text-gray-800 font-semibold text-lg mb-4">Confirm Deletion</h2>
-    <p class="mb-2">Please type the patient's name to confirm deletion:</p>
-
-    <input
-      type="text"
-      [(ngModel)]="confirmName"
-      [placeholder]="selectedMother?.firstName + ' ' + selectedMother?.middleName + ' ' + selectedMother?.lastName"
-      class="w-full border border-gray-300 rounded p-2 mb-4 transition-all duration-300 ease-in-out"
-    />
-
-    <div class="flex justify-center gap-4">
-      <button
-        (click)="closeDeleteModal()"
-        class="px-6 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 transition-colors duration-300"
-      >
-        Cancel
-      </button>
-
-      <button
-        (click)="deleteMother()"
-        [disabled]="confirmName !== selectedMother?.firstName + ' ' + selectedMother?.middleName + ' ' + selectedMother?.lastName"
-        class="px-6 py-2 rounded transition-colors duration-300"
-        [ngClass]="{
-          'bg-black text-white hover:bg-gray-800': confirmName === selectedMother?.firstName + ' ' + selectedMother?.middleName + ' ' + selectedMother?.lastName,
-          'bg-gray-200 text-gray-600 cursor-not-allowed': confirmName !== selectedMother?.firstName + ' ' + selectedMother?.middleName + ' ' + selectedMother?.lastName
-        }"
-      >
-        Delete
-      </button>
-    </div>
-  </div>
-</div>
 
 
   <!-- Notification -->
