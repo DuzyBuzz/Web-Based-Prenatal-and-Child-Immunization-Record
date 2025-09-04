@@ -14,6 +14,7 @@ import { SettingsComponent } from '../pages/settings/settings.component';
 import { IndividualTreatmentRecordPrintOnlyComponent } from '../pages/forms/individual-treatment-record-print-only/individual-treatment-record-print-only.component';
 import { ChildrenimmunizationformPrintOnlyComponent } from '../pages/forms/childrenimmunizationform-print-only/childrenimmunizationform-print-only.component';
 import { ReportsComponent } from '../pages/reports/reports.component';
+import { NewItrFormComponent } from '../pages/forms/new-itr-form/new-itr-form.component';
 
 
 export const usersRoutes: Routes = [
@@ -28,8 +29,8 @@ export const usersRoutes: Routes = [
     { path: 'immunization-form/:childId', component: ChildrenimmunizationformComponent },
     { path: 'prenatal-form/:motherId', component: PrenatalFormComponent },
     { path: 'prenatal-edit-form/:id/:motherId', component: PrenatalEditFormComponent },
-    // { path: 'ITR-Edit-Form/:motherId', component: IndividualTreatmentRecordComponent },
-    // { path: 'ITR-Form', component: IndividualTreatmentRecordComponent },
+    { path: 'ITR-Edit-Form/:motherId', component: NewItrFormComponent },
+    { path: 'ITR-Form', component: NewItrFormComponent },
     { path: 'ITR-Records', component: ItrRecordsComponent },
     { path: 'Settings', component: SettingsComponent },
     { path: 'ITR-Print-Form/:motherId', component: IndividualTreatmentRecordPrintOnlyComponent },

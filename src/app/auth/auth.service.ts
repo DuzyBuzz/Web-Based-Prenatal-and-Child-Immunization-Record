@@ -31,7 +31,7 @@ export class AuthService {
     onAuthStateChanged(this.auth, async (user) => {
       this.userSubject.next(user);
       if (!user) {
-        this.router.navigate(['/auth/login']);
+        // this.router.navigate(['/auth/login']);
       } else if (user.providerData.some(p => p.providerId === 'phone')) {
         // If logged in with phone, redirect to /patient
         this.router.navigate(['/patient']);

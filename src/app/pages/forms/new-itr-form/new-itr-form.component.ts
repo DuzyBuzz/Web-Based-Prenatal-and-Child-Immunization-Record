@@ -1,26 +1,31 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators } from '@angular/forms';
-import { Firestore, addDoc, collection, serverTimestamp } from '@angular/fire/firestore';
+import { ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators, FormsModule } from '@angular/forms';
+import { Firestore, addDoc, collection, serverTimestamp, doc, getDoc, updateDoc } from '@angular/fire/firestore';
+import { AuthService } from '../../../auth/auth.service';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-new-itr-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule],
   templateUrl: './new-itr-form.component.html',
   styleUrls: ['./new-itr-form.component.scss'],
 })
-export class NewItrFormComponent {
+export class NewItrFormComponent implements OnInit {
   private fb = inject(FormBuilder);
   private firestore = inject(Firestore);
+  private authService = inject(AuthService);
+  private route = inject(ActivatedRoute);
 
+  // ✅ Define form
   form: FormGroup = this.fb.group({
     familyName: ['', Validators.required],
     firstName: ['', Validators.required],
     middleName: [''],
     address: ['', Validators.required],
     birthday: ['', Validators.required],
-    age: [{ value: '', disabled: true }],
+    age: [{ value: '', disabled: true }], // auto-calculated
     contactNumber: [''],
     husbandsName: [''],
     lmp: [''],
@@ -35,26 +40,87 @@ export class NewItrFormComponent {
     historyOfIllnesses: [''],
     philHealthNumber: [''],
     philHealthStatus: ['Member'],
-    visits: this.fb.array([] as FormGroup[]),
+    visits: this.fb.array([]), // ✅ cleaner init
   });
 
+  prenatalid: string | null = null;
+  buttonLabel = 'Save & Print';
+  nurseName: string = '';
+
   constructor() {
-    // auto-calc age
+    // auto-calc age from birthday
     this.form.get('birthday')?.valueChanges.subscribe((isoDate: string) => {
       const age = this.calcAge(isoDate);
       this.form.get('age')?.setValue(age ?? '', { emitEvent: false });
     });
 
-    // add first visit row
-    this.addVisit();
+    // Ensure exactly 5 visit rows exist on init
+    while (this.visits.length < 5) {
+      this.addVisit();
+    }
   }
 
-  // visits getter
+  async ngOnInit() {
+    this.route.paramMap.subscribe(async params => {
+      // Fetch nurse name from HCP/{uid}
+      const uid = await this.authService.getCurrentUserId();
+      if (uid) {
+        const hcpDocRef = doc(this.firestore, 'HCP', uid);
+        const hcpSnap = await getDoc(hcpDocRef);
+        if (hcpSnap.exists()) {
+          this.nurseName = hcpSnap.data()['name'] || '';
+        }
+      }
+          console.log('Nurse Name:', this.nurseName);
+
+      const id = params.get('id');
+      if (id) {
+        this.prenatalid = id;
+        this.buttonLabel = 'Update & Print';
+        // Fetch record and patch form
+        const ref = doc(this.firestore, 'itr', id);
+        const snap = await getDoc(ref);
+        if (snap.exists()) {
+          const data = snap.data();
+          this.form.patchValue(data);
+          // If visits is an array, patch it
+          if (Array.isArray(data['visits'])) {
+            this.visits.clear();
+            data['visits'].forEach((visit: any) => this.visits.push(this.fb.group(visit)));
+            // Ensure always 5 visits
+            while (this.visits.length < 5) {
+              this.addVisit();
+            }
+            while (this.visits.length > 5) {
+              this.visits.removeAt(this.visits.length - 1);
+            }
+          }
+        }
+      } else {
+        this.prenatalid = null;
+        this.buttonLabel = 'Save & Print';
+        // Always reset to 5 visits on new
+        while (this.visits.length) this.visits.removeAt(0);
+        while (this.visits.length < 5) this.addVisit();
+      }
+    });
+
+    const uid = await this.authService.getCurrentUserId();
+    if (uid) {
+      const hcpDocRef = doc(this.firestore, 'HCP', uid);
+      const hcpSnap = await getDoc(hcpDocRef);
+      if (hcpSnap.exists()) {
+        this.nurseName = hcpSnap.data()['name'] || '';
+      }
+    }
+  }
+
+  // ✅ visits getter
   get visits(): FormArray {
     return this.form.get('visits') as FormArray;
   }
 
-  // create a visit row
+  // ✅ create visit row
   private createVisit(): FormGroup {
     return this.fb.group({
       date: [''],
@@ -80,6 +146,7 @@ export class NewItrFormComponent {
     });
   }
 
+  // ✅ add/remove visits
   addVisit() {
     this.visits.push(this.createVisit());
   }
@@ -88,31 +155,72 @@ export class NewItrFormComponent {
     this.visits.removeAt(i);
   }
 
-  // calculate age
+  // ✅ calculate age
   private calcAge(isoDate: string | null): number | null {
     if (!isoDate) return null;
     const dob = new Date(isoDate);
     if (isNaN(dob.getTime())) return null;
+
     const today = new Date();
     let age = today.getFullYear() - dob.getFullYear();
     const beforeBirthday =
       today.getMonth() < dob.getMonth() ||
       (today.getMonth() === dob.getMonth() && today.getDate() < dob.getDate());
+
     if (beforeBirthday) age--;
     return age;
   }
 
-  // submit to Firestore
+  // ✅ submit form
   async onSubmit() {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
-    const data = { ...this.form.getRawValue(), createdAt: serverTimestamp() };
-    await addDoc(collection(this.firestore, 'prenatalRecords'), data);
-    alert('Saved to Firestore!');
-    this.form.reset();
-    while (this.visits.length) this.visits.removeAt(0);
-    this.addVisit();
+
+    try {
+      // Get HCP name from Firestore users/HCP/{uid}
+      const uid = await this.authService.getCurrentUserId();
+      if (!uid) {
+        alert('User is not logged in. Please log in to save the record.');
+        return;
+      }
+      const hcpDocRef = doc(this.firestore, 'HCP', uid);
+      const hcpSnap = await getDoc(hcpDocRef);
+      let nurseName = '';
+      if (hcpSnap.exists()) {
+        nurseName = hcpSnap.data()['name'] || '';
+      }
+      if (!nurseName) {
+        alert('HCP name not found. Please complete your profile.');
+        return;
+      }
+      const data = { ...this.form.getRawValue(), nurseName, updatedAt: serverTimestamp() };
+
+      if (this.prenatalid) {
+        // Update existing record
+        const ref = doc(this.firestore, 'itr', this.prenatalid);
+        await updateDoc(ref, data);
+        alert('Record updated!');
+      } else {
+        // Create new record
+        await addDoc(collection(this.firestore, 'itr'), { ...data, createdAt: serverTimestamp() });
+        alert('Saved to Firestore!');
+      }
+
+      // Print before resetting the form so the filled form is printed
+      window.print();
+
+      // Reset form for new entry
+      if (!this.prenatalid) {
+        this.form.reset({ philHealthStatus: 'Member' });
+        while (this.visits.length) this.visits.removeAt(0);
+        while (this.visits.length < 5) this.addVisit();
+      }
+
+    } catch (error) {
+      console.error('Error saving record:', error);
+      alert('Failed to save. Please try again.');
+    }
   }
 }
