@@ -20,7 +20,7 @@ export class NewItrFormComponent implements OnInit {
 
   // ✅ Define form
   form: FormGroup = this.fb.group({
-    familyName: ['', Validators.required],
+    lastName: ['', Validators.required],
     firstName: ['', Validators.required],
     middleName: [''],
     address: ['', Validators.required],

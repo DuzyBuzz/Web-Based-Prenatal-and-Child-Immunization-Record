@@ -27,8 +27,8 @@
     <!-- Row: FAMILY / FIRST / MIDDLE (single-line fields with underlines) -->
     <div class="grid grid-cols-12 gap-2 items-center">
       <label class="col-span-2 text-xs font-semibold">FAMILY NAME:</label>
-  <input type="text" formControlName="familyName" class="col-span-3 border-b border-gray-400 bg-transparent text-sm px-1 py-1 focus:outline-none" />
-  <div *ngIf="form.get('familyName')?.invalid && form.get('familyName')?.touched" class="col-span-12 text-xs text-red-600 mt-1">Family Name is required.</div>
+  <input type="text" formControlName="lastName" class="col-span-3 border-b border-gray-400 bg-transparent text-sm px-1 py-1 focus:outline-none" />
+  <div *ngIf="form.get('lastName')?.invalid && form.get('lastName')?.touched" class="col-span-12 text-xs text-red-600 mt-1">Family Name is required.</div>
 
       <label class="col-span-2 text-xs font-semibold">FIRST NAME:</label>
   <input type="text" formControlName="firstName" class="col-span-2 border-b border-gray-400 bg-transparent text-sm px-1 py-1 focus:outline-none" />
