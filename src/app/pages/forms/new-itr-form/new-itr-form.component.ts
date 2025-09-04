@@ -59,61 +59,47 @@ export class NewItrFormComponent implements OnInit {
       this.addVisit();
     }
   }
-
-  async ngOnInit() {
-    this.route.paramMap.subscribe(async params => {
-      // Fetch nurse name from HCP/{uid}
-      const uid = await this.authService.getCurrentUserId();
-      if (uid) {
-        const hcpDocRef = doc(this.firestore, 'HCP', uid);
-        const hcpSnap = await getDoc(hcpDocRef);
-        if (hcpSnap.exists()) {
-          this.nurseName = hcpSnap.data()['name'] || '';
-        }
-      }
-          console.log('Nurse Name:', this.nurseName);
-
-      const id = params.get('id');
-      if (id) {
-        this.prenatalid = id;
-        this.buttonLabel = 'Update & Print';
-        // Fetch record and patch form
-        const ref = doc(this.firestore, 'itr', id);
-        const snap = await getDoc(ref);
-        if (snap.exists()) {
-          const data = snap.data();
-          this.form.patchValue(data);
-          // If visits is an array, patch it
-          if (Array.isArray(data['visits'])) {
-            this.visits.clear();
-            data['visits'].forEach((visit: any) => this.visits.push(this.fb.group(visit)));
-            // Ensure always 5 visits
-            while (this.visits.length < 5) {
-              this.addVisit();
-            }
-            while (this.visits.length > 5) {
-              this.visits.removeAt(this.visits.length - 1);
-            }
-          }
-        }
-      } else {
-        this.prenatalid = null;
-        this.buttonLabel = 'Save & Print';
-        // Always reset to 5 visits on new
-        while (this.visits.length) this.visits.removeAt(0);
-        while (this.visits.length < 5) this.addVisit();
-      }
-    });
-
-    const uid = await this.authService.getCurrentUserId();
-    if (uid) {
-      const hcpDocRef = doc(this.firestore, 'HCP', uid);
-      const hcpSnap = await getDoc(hcpDocRef);
-      if (hcpSnap.exists()) {
-        this.nurseName = hcpSnap.data()['name'] || '';
-      }
-    }
+async ngOnInit() {
+  // Get the currently logged-in HCP from AuthService
+  const authUser = this.authService.getAuthUser();
+  if (authUser && authUser.role === 'hcp') {
+    this.nurseName = authUser.name;
+    console.log('Nurse Name from AuthService:', this.nurseName);
+  } else {
+    console.warn('No authenticated HCP found.');
   }
+
+  // Then handle route params as before
+  this.route.paramMap.subscribe(async params => {
+    const id = params.get('id');
+    if (id) {
+      this.prenatalid = id;
+      this.buttonLabel = 'Update & Print';
+
+      // Fetch prenatal record
+      const ref = doc(this.firestore, 'itr', id);
+      const snap = await getDoc(ref);
+      if (snap.exists()) {
+        const data = snap.data();
+        this.form.patchValue(data);
+
+        if (Array.isArray(data['visits'])) {
+          this.visits.clear();
+          data['visits'].forEach((visit: any) => this.visits.push(this.fb.group(visit)));
+
+          while (this.visits.length < 5) this.addVisit();
+          while (this.visits.length > 5) this.visits.removeAt(this.visits.length - 1);
+        }
+      }
+    } else {
+      this.prenatalid = null;
+      this.buttonLabel = 'Save & Print';
+      while (this.visits.length) this.visits.removeAt(0);
+      while (this.visits.length < 5) this.addVisit();
+    }
+  });
+}
+
 
   // ✅ visits getter
   get visits(): FormArray {
@@ -179,23 +165,12 @@ export class NewItrFormComponent implements OnInit {
     }
 
     try {
-      // Get HCP name from Firestore users/HCP/{uid}
-      const uid = await this.authService.getCurrentUserId();
-      if (!uid) {
-        alert('User is not logged in. Please log in to save the record.');
-        return;
-      }
-      const hcpDocRef = doc(this.firestore, 'HCP', uid);
-      const hcpSnap = await getDoc(hcpDocRef);
-      let nurseName = '';
-      if (hcpSnap.exists()) {
-        nurseName = hcpSnap.data()['name'] || '';
-      }
-      if (!nurseName) {
+      // Use nurseName property from component
+      if (!this.nurseName || this.nurseName.trim() === '') {
         alert('HCP name not found. Please complete your profile.');
         return;
       }
-      const data = { ...this.form.getRawValue(), nurseName, updatedAt: serverTimestamp() };
+      const data = { ...this.form.getRawValue(), nurseName: this.nurseName, updatedAt: serverTimestamp() };
 
       if (this.prenatalid) {
         // Update existing record
