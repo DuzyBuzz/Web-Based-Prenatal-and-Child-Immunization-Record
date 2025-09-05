@@ -56,7 +56,13 @@
       <input type="number" formControlName="age" class="col-span-1 border-b border-gray-400 bg-transparent text-sm px-1 py-1 focus:outline-none" />
 
       <label class="col-span-2 text-xs font-semibold">CONTACT NUMBER:</label>
-      <input type="number" formControlName="contactNumber" class="col-span-3 border-b border-gray-400 bg-transparent text-sm px-1 py-1 focus:outline-none" />
+      <input
+        type="text"
+        formControlName="contactNumber"
+        class="col-span-2 border-b border-gray-400 bg-transparent text-sm px-1 py-1 focus:outline-none"
+        maxlength="11"
+        placeholder="e.g. 09926105119"
+      />
     </div>
 
     <!-- Row: HUSBAND'S NAME -->

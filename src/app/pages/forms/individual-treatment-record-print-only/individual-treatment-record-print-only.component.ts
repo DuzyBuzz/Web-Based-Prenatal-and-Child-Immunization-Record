@@ -84,24 +84,6 @@ export class IndividualTreatmentRecordPrintOnlyComponent implements OnInit {
     }, 1000);
   }
 
-  // Helper to get the 2nd Tuesday of next month
-  private getSecondTuesdayNextMonth(): string {
-    const now = new Date();
-    const year = now.getMonth() === 11 ? now.getFullYear() + 1 : now.getFullYear();
-    const month = (now.getMonth() + 1) % 12;
-    let count = 0;
-    for (let day = 1; day <= 15; day++) {
-      const date = new Date(year, month, day);
-      if (date.getDay() === 2) { // 2 = Tuesday
-        count++;
-        if (count === 2) {
-          return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-        }
-      }
-    }
-    return '';
-  }
-
   async onSubmit(form?: any) {
     this.successMessage = null;
     this.errorMessage = null;
@@ -123,46 +105,94 @@ export class IndividualTreatmentRecordPrintOnlyComponent implements OnInit {
       const record = {
         ...this.itr,
         dateSaved: new Date().toISOString(),
-
       };
 
       await addDoc(collection(this.firestore, 'ITR'), record);
 
-      // Compose SMS
+      // Compose SMS (limit to 150 chars, professional)
       const name = this.itr.firstName ? `${this.itr.firstName} ${this.itr.lastName}` : 'Patient';
       const contact = this.itr.contact;
       const nextPrenatal = this.getSecondTuesdayNextMonth();
-      const message =
-        `Good day ${name}, ` +
-        `Your Next Prenatal is on ${nextPrenatal}. ` +
-        `Expect reminder on the day of your appointment.`;
+      let message = `Prenatal reminder: ${name}, next checkup on ${nextPrenatal}. Bring records. Reply for info.`;
+      if (message.length > 150) message = message.slice(0, 147) + '...';
+
+      // Scheduled SMS for 2nd Tuesday next month at 3AM
+      const scheduledAt = this.getSecondTuesdayNextMonthAt3AMString();
+      let scheduledMessage = `Reminder: ${name}, prenatal checkup today at health center. Bring records.`;
+      if (scheduledMessage.length > 150) scheduledMessage = scheduledMessage.slice(0, 147) + '...';
 
       // Send SMS if contact is provided
       if (contact) {
-        
         this.smsService.sendSms(contact, message).subscribe({
           next: () => {
             this.successMessage = 'Record saved and SMS notification sent successfully.';
-            window.print(); // Print the form after successful save and SMS
-            this.itr = {}; // reset form
+            window.print();
+            this.itr = {};
           },
           error: (err) => {
             this.successMessage = 'Record saved, but failed to send SMS notification.';
             this.errorMessage = 'SMS Error: ' + (err?.error?.message || 'Unknown error sending SMS.');
-            window.print(); // Still print even if SMS fails
+            window.print();
           }
         });
-      
-        this.successMessage = 'Record saved successfully. SMS notification sending is currently disabled.';
-        window.print(); // Print the form after successful save
+        // Schedule SMS reminder ONLY for the 2nd Tuesday of next month at 3AM
+        this.smsService.scheduleSmsReminder(contact, scheduledMessage, scheduledAt).subscribe({
+          next: (res: any) => console.log('Scheduled SMS set:', res),
+          error: (err: any) => console.error('Scheduled SMS failed:', err)
+        });
       } else {
         this.successMessage = 'Record saved successfully. No contact number provided for SMS notification.';
-        window.print(); // Print the form after successful save
+        window.print();
       }
 
     } catch (error: any) {
       this.errorMessage = 'Error saving ITR: ' + (error?.message || 'Unknown error');
     }
+  }
+
+  // Helper to get the 2nd Tuesday of next month
+  private getSecondTuesdayNextMonth(): string {
+    const now = new Date();
+    const year = now.getMonth() === 11 ? now.getFullYear() + 1 : now.getFullYear();
+    const month = (now.getMonth() + 1) % 12;
+    let count = 0;
+    for (let day = 1; day <= 15; day++) {
+      const date = new Date(year, month, day);
+      if (date.getDay() === 2) { // 2 = Tuesday
+        count++;
+        if (count === 2) {
+          return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        }
+      }
+    }
+    return '';
+  }
+
+  // Helper to get the 2nd Tuesday of next month at 3AM (YYYY-MM-DD HH:mmA)
+  private getSecondTuesdayNextMonthAt3AMString(): string {
+    const now = new Date();
+    const year = now.getMonth() === 11 ? now.getFullYear() + 1 : now.getFullYear();
+    const month = (now.getMonth() + 1) % 12;
+    let count = 0;
+    for (let day = 1; day <= 15; day++) {
+      const date = new Date(year, month, day);
+      if (date.getDay() === 2) {
+        count++;
+        if (count === 2) {
+          date.setHours(3, 0, 0, 0);
+          const y = date.getFullYear();
+          const m = (date.getMonth() + 1).toString().padStart(2, '0');
+          const d = date.getDate().toString().padStart(2, '0');
+          let h = date.getHours();
+          const ampm = h >= 12 ? 'PM' : 'AM';
+          h = h % 12;
+          if (h === 0) h = 12;
+          const hh = h.toString().padStart(2, '0');
+          return `${y}-${m}-${d} ${hh}:00${ampm}`;
+        }
+      }
+    }
+    return '';
   }
 
   printAndSaveOrUpdateITR(form: any) {

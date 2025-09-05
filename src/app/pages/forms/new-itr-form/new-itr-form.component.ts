@@ -4,6 +4,7 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators, For
 import { Firestore, addDoc, collection, serverTimestamp, doc, getDoc, updateDoc } from '@angular/fire/firestore';
 import { AuthService } from '../../../auth/auth.service';
 import { ActivatedRoute } from '@angular/router';
+import { SmsService } from '../../../services/sms.service';
 
 @Component({
   selector: 'app-new-itr-form',
@@ -38,6 +39,7 @@ nows: Date = new Date();
   private firestore = inject(Firestore);
   private authService = inject(AuthService);
   private route = inject(ActivatedRoute);
+  private smsService = inject(SmsService);
   now: Date | undefined;
   // ✅ Define form
   form: FormGroup = this.fb.group({
@@ -213,6 +215,66 @@ async ngOnInit() {
     return age;
   }
 
+  // Helper to get the 2nd Tuesday of next month
+  private getSecondTuesdayNextMonth(): string {
+    const now = new Date();
+    const year = now.getMonth() === 11 ? now.getFullYear() + 1 : now.getFullYear();
+    const month = (now.getMonth() + 1) % 12;
+    let count = 0;
+    for (let day = 1; day <= 15; day++) {
+      const date = new Date(year, month, day);
+      if (date.getDay() === 2) { // 2 = Tuesday
+        count++;
+        if (count === 2) {
+          return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        }
+      }
+    }
+    return '';
+  }
+
+  // Helper to get the 2nd Tuesday of next month at 3AM (YYYY-MM-DD HH:mmA)
+  private getSecondTuesdayNextMonthAt3AMString(): string {
+    const now = new Date();
+    const year = now.getMonth() === 11 ? now.getFullYear() + 1 : now.getFullYear();
+    const month = (now.getMonth() + 1) % 12;
+    let count = 0;
+    for (let day = 1; day <= 15; day++) {
+      const date = new Date(year, month, day);
+      if (date.getDay() === 2) {
+        count++;
+        if (count === 2) {
+          date.setHours(3, 0, 0, 0);
+          const y = date.getFullYear();
+          const m = (date.getMonth() + 1).toString().padStart(2, '0');
+          const d = date.getDate().toString().padStart(2, '0');
+          let h = date.getHours();
+          const ampm = h >= 12 ? 'PM' : 'AM';
+          h = h % 12;
+          if (h === 0) h = 12;
+          const hh = h.toString().padStart(2, '0');
+          return `${y}-${m}-${d} ${hh}:00${ampm}`;
+        }
+      }
+    }
+    return '';
+  }
+
+  // Helper to format PH mobile number (returns valid 11-digit number or empty string)
+  private formatPHNumber(raw: any): string {
+    // Convert to string and trim
+    const str = (raw ?? '').toString().trim();
+    // Remove all non-digit characters
+    const digits = str.replace(/\D/g, '');
+    // Debug log
+    console.log('Raw contact input:', raw, 'Digits:', digits);
+    // Must start with '09' and be 11 digits
+    if (digits.length === 11 && digits.startsWith('09')) {
+      return digits;
+    }
+    return '';
+  }
+
   // ✅ submit form
   async onSubmit() {
     if (this.form.invalid) {
@@ -222,10 +284,20 @@ async ngOnInit() {
 
     console.log('Form submission:', this.form.getRawValue(), 'prenatalid:', this.prenatalid, 'nurseName:', this.nurseName);
 
-    // Check for duplicate patient name
-    const lastName = this.form.get('lastName')?.value?.trim();
-    const firstName = this.form.get('firstName')?.value?.trim();
-    const middleName = this.form.get('middleName')?.value?.trim() || '';
+    const lastName = (this.form.get('lastName')?.value ?? '').toString().trim();
+    const firstName = (this.form.get('firstName')?.value ?? '').toString().trim();
+    const middleName = (this.form.get('middleName')?.value ?? '').toString().trim();
+
+    // Format contact number as PH mobile number
+    const rawContact = this.form.get('contactNumber')?.value;
+    const contact = this.formatPHNumber(rawContact);
+
+    // Do not proceed if contact number is invalid
+    if (!contact) {
+      alert('Please enter a valid PH mobile number (e.g., 09926105119).');
+      return;
+    }
+
     if (lastName && firstName) {
       const isDuplicate = await this.checkDuplicateName(lastName, firstName, middleName);
       if (isDuplicate) {
@@ -235,7 +307,6 @@ async ngOnInit() {
     }
 
     try {
-      // Use nurseName property from component
       if (!this.nurseName || this.nurseName.trim() === '') {
         alert('HCP name not found. Please complete your profile.');
         return;
@@ -243,20 +314,39 @@ async ngOnInit() {
       const data = { ...this.form.getRawValue(), nurseName: this.nurseName, updatedAt: serverTimestamp() };
 
       if (this.prenatalid) {
-        // Update existing record
         const ref = doc(this.firestore, 'itr', this.prenatalid);
         await updateDoc(ref, data);
         alert('Record updated!');
       } else {
-        // Create new record
         await addDoc(collection(this.firestore, 'itr'), { ...data, createdAt: serverTimestamp() });
         alert('Saved to Firestore!');
       }
 
-      // Print before resetting the form so the filled form is printed
+      // --- SMS Logic ---
+      const name = firstName ? `${firstName} ${lastName}` : 'Patient';
+      const nextPrenatal = this.getSecondTuesdayNextMonth();
+      let message = `Prenatal reminder: ${name}, next checkup on ${nextPrenatal}. Bring records. Reply for info.`;
+      if (message.length > 150) message = message.slice(0, 147) + '...';
+
+      const scheduledAt = this.getSecondTuesdayNextMonthAt3AMString();
+      let scheduledMessage = `Reminder: ${name}, prenatal checkup today at health center. Bring records.`;
+      if (scheduledMessage.length > 150) scheduledMessage = scheduledMessage.slice(0, 147) + '...';
+
+      this.smsService.sendSms(contact, message).subscribe({
+        next: () => {
+          console.log('Immediate SMS sent.');
+        },
+        error: (err) => {
+          console.error('SMS Error:', err);
+        }
+      });
+      this.smsService.scheduleSmsReminder(contact, scheduledMessage, scheduledAt).subscribe({
+        next: (res: any) => console.log('Scheduled SMS set:', res),
+        error: (err: any) => console.error('Scheduled SMS failed:', err)
+      });
+
       window.print();
 
-      // Reset form for new entry
       if (!this.prenatalid) {
         this.form.reset({ philHealthStatus: 'Member' });
         while (this.visits.length) this.visits.removeAt(0);
