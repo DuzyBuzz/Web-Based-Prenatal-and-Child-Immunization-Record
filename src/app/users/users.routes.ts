@@ -30,6 +30,7 @@ export const usersRoutes: Routes = [
     { path: 'prenatal-form/:motherId', component: PrenatalFormComponent },
     { path: 'prenatal-edit-form/:id/:motherId', component: PrenatalEditFormComponent },
     { path: 'ITR-Edit-Form/:motherId', component: NewItrFormComponent },
+    { path: 'ITR-Edit-Form/:id', component: NewItrFormComponent },
     { path: 'ITR-Form', component: NewItrFormComponent },
     { path: 'ITR-Records', component: ItrRecordsComponent },
     { path: 'Settings', component: SettingsComponent },

@@ -240,7 +240,12 @@
     </tbody>
   </table>
 </div>
-
+      <!-- Timestamp -->
+    <div class="flex justify-start items-center mb-1">
+      <span class="text-xs text-gray-600 font-medium">
+        {{ nows | date:'fullDate' }} {{ nows | date:'shortTime' }}
+      </span>
+    </div>
       <!-- Save & Print Button -->
   <div class="flex justify-end mb-2 mt-10">
     <button
@@ -251,8 +256,7 @@
       {{ prenatalid ? 'Update & Print' : 'Save & Print' }}
     </button>
   </div>
-  <div class="mb-2 text-sm text-gray-700">
-  Nurse Name: <span class="font-semibold">{{ nurseName }}</span>
-</div>
+
   </form>
+
 </div>
