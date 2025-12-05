@@ -26,6 +26,10 @@ export class ChildrenimmunizationformComponent implements OnInit {
   showModal = false;
   modalMessage = '';
   modalType: 'info' | 'success' | 'warning' | 'error' = 'info';
+  // Next appointment modal state
+  showNextAppointmentModal = false;
+  nextAppointmentDate: string = '';
+  private pendingSave = false;
 
   constructor(
     private firestore: Firestore,
@@ -124,6 +128,7 @@ async printAndSaveOrUpdateITR(form: NgForm): Promise<void> {
       return;
     }
 
+    // open modal to allow user choose next appointment before saving
     this.isLoading = true;
     try {
       const immunizationCollection = collection(this.firestore, 'immunization');
@@ -136,36 +141,81 @@ async printAndSaveOrUpdateITR(form: NgForm): Promise<void> {
         return;
       }
 
-  const uid = await this.authService.getCurrentUserId();
-  // Save the value from the BHW input as nurseName
-  this.formData.SecondWednesdayNextMonth = this.getSecondWednesdayNextMonth();
-  this.formData.createdDate = new Date().toISOString();
-  this.formData.uid = uid;
-  this.formData.nurseName = this.formData.bhw;
+      // Prepare metadata but do not save yet
+      this.formData.createdDate = new Date().toISOString();
+      this.formData.uid = await this.authService.getCurrentUserId();
+      this.formData.nurseName = this.formData.bhw;
 
-  await addDoc(immunizationCollection, this.formData);
+      // Prefill suggested next appointment (existing behavior) but let user change
+      this.nextAppointmentDate = this.getSecondWednesdayNextMonth();
+      this.pendingSave = true;
+      this.openNextAppointmentModal();
+      this.isLoading = false;
+      return;
+    } catch (error) {
+      this.showModalMessage('An error occurred while preparing the record. Please try again.', 'error');
+      this.isLoading = false;
+      return;
+    }
+  }
+
+  // Open the date-picker modal to ask user for next appointment date
+  openNextAppointmentModal() {
+    this.showNextAppointmentModal = true;
+  }
+
+  // Cancel modal
+  cancelNextAppointment() {
+    this.showNextAppointmentModal = false;
+    this.pendingSave = false;
+  }
+
+  // User confirms chosen date; perform actual save and scheduling
+  async confirmNextAppointment() {
+    if (!this.nextAppointmentDate) {
+      alert('Please choose the next appointment date.');
+      return;
+    }
+    // Store chosen date in the form data (use ISO or human-readable as needed)
+    this.formData.SecondWednesdayNextMonth = this.nextAppointmentDate;
+    this.showNextAppointmentModal = false;
+    if (this.pendingSave) {
+      this.pendingSave = false;
+      await this.performSave();
+    }
+  }
+
+  // perform the actual save and sms scheduling (extracted from onSubmit)
+  private async performSave() {
+    this.isLoading = true;
+    try {
+      const immunizationCollection = collection(this.firestore, 'immunization');
+      await addDoc(immunizationCollection, this.formData);
 
       // --- SMS logic ---
       const contact = this.formData.contact;
-      const nextImmunization = this.getSecondWednesdayNextMonth();
-      const message =
-        `Good day ${this.formData.mother}, Next Immunization for ${this.formData.name} is on ${nextImmunization}. Expect reminder on the day of your appointment.`;
+      const nextImmunization = this.formData.SecondWednesdayNextMonth;
+      const message = `Good day ${this.formData.mother}, Next Immunization for ${this.formData.name} is on ${nextImmunization}. Expect reminder on the day of your appointment.`;
 
       if (contact) {
         // Immediate SMS
         this.smsService.sendSms(contact, message).subscribe({
-          next: (res: any) => console.log("Immediate SMS sent:", res),
-          error: (err: { error: any }) => console.error("Immediate SMS failed:", err.error)
+          next: (res: any) => console.log('Immediate SMS sent:', res),
+          error: (err: { error: any }) => console.error('Immediate SMS failed:', err.error)
         });
 
-        // Scheduled SMS
-        const scheduledAt = this.getSecondWednesdayNextMonthAt3AMString();
+        // Scheduled SMS — use user-chosen date; convert to API format
+        const scheduledAt = this.getScheduledAtFromDateString(nextImmunization);
         const scheduledMessage = `Reminder: Immunization for ${this.formData.name} is today (${nextImmunization}). Please visit the health center.`;
 
-        this.smsService.scheduleSmsReminder(contact, scheduledMessage, scheduledAt).subscribe({
-          next: (res: any) => console.log("Scheduled SMS set:", res),
-          error: (err: { error: any }) => console.error("Scheduled SMS failed:", err.error)
-        });
+        if (scheduledAt) {
+          this.smsService.scheduleSmsReminder(contact, scheduledMessage, scheduledAt).subscribe({
+            next: (res: any) => console.log('Scheduled SMS set:', res),
+            error: (err: { error: any }) => console.error('Scheduled SMS failed:', err.error)
+          });
+        } else {
+          console.warn('Could not parse scheduled date for SMS scheduling; skipping scheduled SMS.');
+        }
       }
       // --- End SMS logic ---
 
@@ -175,6 +225,24 @@ async printAndSaveOrUpdateITR(form: NgForm): Promise<void> {
       this.showModalMessage('An error occurred while saving the record. Please try again.', 'error');
       this.isLoading = false;
     }
+  }
+
+  // Convert a date string (human-readable or ISO) into API scheduled format YYYY-MM-DD HH:mmA
+  private getScheduledAtFromDateString(dateStr: string): string | null {
+    if (!dateStr) return null;
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return null;
+    // set to 03:00 AM local time
+    d.setHours(3, 0, 0, 0);
+    const y = d.getFullYear();
+    const m = (d.getMonth() + 1).toString().padStart(2, '0');
+    const day = d.getDate().toString().padStart(2, '0');
+    let h = d.getHours();
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12;
+    if (h === 0) h = 12;
+    const hh = h.toString().padStart(2, '0');
+    return `${y}-${m}-${day} ${hh}:00${ampm}`;
   }
 
   private async saveImmunization(data: any, showModal = false) {

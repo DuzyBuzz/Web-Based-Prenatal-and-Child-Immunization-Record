@@ -69,6 +69,10 @@ nows: Date = new Date();
   prenatalid: string | null = null;
   buttonLabel = 'Save & Print';
   nurseName: string = '';
+  // Next appointment modal state
+  showNextAppointmentModal = false;
+  nextAppointmentDate: string = '';
+  private pendingSave = false;
 
   constructor() {
     // auto-calc age from birthday
@@ -311,6 +315,51 @@ async ngOnInit() {
         alert('HCP name not found. Please complete your profile.');
         return;
       }
+
+      // Store form data for later use in performSave
+      this.form.getRawValue();
+
+      // Prefill suggested next appointment but let user change
+      this.nextAppointmentDate = this.getSecondTuesdayNextMonth();
+      this.pendingSave = true;
+      this.openNextAppointmentModal();
+      return;
+    } catch (error) {
+      console.error('Error preparing record:', error);
+      alert('Failed to prepare record. Please try again.');
+    }
+  }
+
+  // Open the date-picker modal to ask user for next appointment date
+  openNextAppointmentModal() {
+    this.showNextAppointmentModal = true;
+  }
+
+  // Cancel modal
+  cancelNextAppointment() {
+    this.showNextAppointmentModal = false;
+    this.pendingSave = false;
+  }
+
+  // User confirms chosen date; perform actual save and scheduling
+  async confirmNextAppointment() {
+    if (!this.nextAppointmentDate) {
+      alert('Please choose the next appointment date.');
+      return;
+    }
+    this.showNextAppointmentModal = false;
+    if (this.pendingSave) {
+      this.pendingSave = false;
+      await this.performSave();
+    }
+  }
+
+  // Perform the actual save and SMS scheduling (extracted from onSubmit)
+  private async performSave() {
+    try {
+      const firstName = (this.form.get('firstName')?.value ?? '').toString().trim();
+      const lastName = (this.form.get('lastName')?.value ?? '').toString().trim();
+      const contact = this.formatPHNumber(this.form.get('contactNumber')?.value);
       const data = { ...this.form.getRawValue(), nurseName: this.nurseName, updatedAt: serverTimestamp() };
 
       if (this.prenatalid) {
@@ -324,26 +373,33 @@ async ngOnInit() {
 
       // --- SMS Logic ---
       const name = firstName ? `${firstName} ${lastName}` : 'Patient';
-      const nextPrenatal = this.getSecondTuesdayNextMonth();
-      let message = `Prenatal reminder: ${name}, next checkup on ${nextPrenatal}. Bring records. Reply for info.`;
+      let message = `Prenatal reminder: ${name}, next checkup on ${this.nextAppointmentDate}. Bring records.`;
       if (message.length > 150) message = message.slice(0, 147) + '...';
 
-      const scheduledAt = this.getSecondTuesdayNextMonthAt3AMString();
-      let scheduledMessage = `Reminder: ${name}, prenatal checkup today at health center. Bring records.`;
-      if (scheduledMessage.length > 150) scheduledMessage = scheduledMessage.slice(0, 147) + '...';
+      if (contact) {
+        this.smsService.sendSms(contact, message).subscribe({
+          next: () => {
+            console.log('Immediate SMS sent.');
+          },
+          error: (err) => {
+            console.error('SMS Error:', err);
+          }
+        });
 
-      this.smsService.sendSms(contact, message).subscribe({
-        next: () => {
-          console.log('Immediate SMS sent.');
-        },
-        error: (err) => {
-          console.error('SMS Error:', err);
+        // Scheduled SMS using user-chosen date
+        const scheduledAt = this.getScheduledAtFromDateString(this.nextAppointmentDate);
+        let scheduledMessage = `Reminder: ${name}, prenatal checkup today at health center. Bring records.`;
+        if (scheduledMessage.length > 150) scheduledMessage = scheduledMessage.slice(0, 147) + '...';
+
+        if (scheduledAt) {
+          this.smsService.scheduleSmsReminder(contact, scheduledMessage, scheduledAt).subscribe({
+            next: (res: any) => console.log('Scheduled SMS set:', res),
+            error: (err: any) => console.error('Scheduled SMS failed:', err)
+          });
+        } else {
+          console.warn('Could not parse scheduled date for SMS scheduling; skipping scheduled SMS.');
         }
-      });
-      this.smsService.scheduleSmsReminder(contact, scheduledMessage, scheduledAt).subscribe({
-        next: (res: any) => console.log('Scheduled SMS set:', res),
-        error: (err: any) => console.error('Scheduled SMS failed:', err)
-      });
+      }
 
       window.print();
 
@@ -352,10 +408,27 @@ async ngOnInit() {
         while (this.visits.length) this.visits.removeAt(0);
         while (this.visits.length < 5) this.addVisit();
       }
-
     } catch (error) {
       console.error('Error saving record:', error);
       alert('Failed to save. Please try again.');
     }
+  }
+
+  // Convert a date string (human-readable or ISO) into API scheduled format YYYY-MM-DD HH:mmA
+  private getScheduledAtFromDateString(dateStr: string): string | null {
+    if (!dateStr) return null;
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return null;
+    // set to 03:00 AM local time
+    d.setHours(3, 0, 0, 0);
+    const y = d.getFullYear();
+    const m = (d.getMonth() + 1).toString().padStart(2, '0');
+    const day = d.getDate().toString().padStart(2, '0');
+    let h = d.getHours();
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12;
+    if (h === 0) h = 12;
+    const hh = h.toString().padStart(2, '0');
+    return `${y}-${m}-${day} ${hh}:00${ampm}`;
   }
 }

@@ -44,6 +44,15 @@
       </button>
     </form>
 
+    <!-- Patient quick links: allow patients to access forms directly -->
+    <div class="w-60 bg-white rounded-lg shadow p-4 text-center">
+      <p class="text-sm text-gray-600 mb-3 font-semibold">Patient? Register your profile or add a child's immunization record:</p>
+        <div class="flex flex-col gap-2">
+        <a [routerLink]="['/HCP/ITR-Form']" [queryParams]="{ bare: true }" class="inline-block px-3 py-2 bg-emerald-500 text-white rounded hover:bg-emerald-600 transition">Prenatal / ITR Form</a>
+        <a [routerLink]="['/HCP/immunization-form']" [queryParams]="{ bare: true }" class="inline-block px-3 py-2 bg-sky-500 text-white rounded hover:bg-sky-600 transition">Child Immunization Form</a>
+      </div>
+    </div>
+
   </div>
 
   <app-spinnner

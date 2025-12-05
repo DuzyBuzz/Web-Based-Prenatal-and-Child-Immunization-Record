@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../auth.service';
@@ -10,7 +10,7 @@ import { SpinnnerComponent } from '../../shared/core/spinnner/spinnner.component
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, FormsModule, SharedModule, SpinnnerComponent],
+  imports: [CommonModule, FormsModule, SharedModule, SpinnnerComponent, RouterLink],
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss'],
 })

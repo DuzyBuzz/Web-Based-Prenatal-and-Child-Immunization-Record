@@ -26,33 +26,38 @@ export class ReportsComponent implements OnInit {
     private authService: AuthService
   ) {}
 
-  async ngOnInit() {
-    // Get current user UID and nurse name
-    const user = await firstValueFrom(this.authService.getCurrentUser());
-    this.uid = user?.uid ?? null;
-    this.nurseName = user?.displayName ?? null;
+  ngOnInit() {
+    // Subscribe to auth state. When user becomes available, use uid for filtering.
+    // If no user is present yet, show all records so the reports page displays data.
+    this.authService.getCurrentUser().subscribe({
+      next: (user) => {
+        this.uid = user?.uid ?? null;
+        this.nurseName = user?.displayName ?? null;
 
-    // Filter ITR by createdBy == uid
-    if (this.uid) {
-      const itrCollection = collection(this.firestore, 'itr');
-      this.itrData$ = collectionData(itrCollection, { idField: 'id' }).pipe(
-        map(arr => arr.filter((item: any) => item.createdBy === this.uid))
-      );
-      this.itrData$.subscribe(() => this.itrLoading = false);
-    } else {
-      this.itrLoading = false;
-    }
+        const itrCollection = collection(this.firestore, 'itr');
+        this.itrData$ = collectionData(itrCollection, { idField: 'id' }).pipe(
+          map(arr => this.uid ? arr.filter((item: any) => item.createdBy === this.uid) : arr)
+        );
+        this.itrData$.subscribe(() => this.itrLoading = false);
 
-    // Filter Immunization by nurseName == displayName (or use uid if that's how it's stored)
-    if (this.uid) {
-      const immunizationCollection = collection(this.firestore, 'immunization');
-      this.immunizationData$ = collectionData(immunizationCollection, { idField: 'id' }).pipe(
-        map(arr => arr.filter((item: any) => item.uid === this.uid))
-      );
-      this.immunizationData$.subscribe(() => this.immunizationLoading = false);
-    } else {
-      this.immunizationLoading = false;
-    }
+        const immunizationCollection = collection(this.firestore, 'immunization');
+        this.immunizationData$ = collectionData(immunizationCollection, { idField: 'id' }).pipe(
+          map(arr => this.uid ? arr.filter((item: any) => item.uid === this.uid) : arr)
+        );
+        this.immunizationData$.subscribe(() => this.immunizationLoading = false);
+      },
+      error: (err) => {
+        console.error('Error getting auth user for reports:', err);
+        // fall back to loading collections without filters
+        const itrCollection = collection(this.firestore, 'itr');
+        this.itrData$ = collectionData(itrCollection, { idField: 'id' });
+        this.itrData$.subscribe(() => this.itrLoading = false);
+
+        const immunizationCollection = collection(this.firestore, 'immunization');
+        this.immunizationData$ = collectionData(immunizationCollection, { idField: 'id' });
+        this.immunizationData$.subscribe(() => this.immunizationLoading = false);
+      }
+    });
   }
 
   async downloadExcel(type: 'itr' | 'immunization') {

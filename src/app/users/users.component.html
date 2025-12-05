@@ -4,21 +4,19 @@
   <div class="flex flex-1 overflow-hidden bg-slate-200 bg-cover bg-opacity-100"
 >
     <!-- Left Side Panel -->
-     <div class="flex min-h-screen bg-slate-200 rounded-lg">
+     <div *ngIf="showLayout" class="flex min-h-screen bg-slate-200 rounded-lg">
       <app-left-side-panel></app-left-side-panel>
 
      </div>
 
     <!-- Main Content (Router Outlet Container) -->
-    <main class="flex-1 flex flex-col w-9/12 overflow-hidden "
+    <main class="flex-1 flex flex-col overflow-hidden "
     >
       <div class="flex-1 overflow-y-auto  p-6"
       >
       <div class="flex">
-  <!-- The sidebar is rendered by the router-outlet or parent layout, so no need to include it here -->
-
   <!-- Main Content -->
-  <div class="flex-1 min-h-screen bg-gray-50 transition-all duration-300 md:ml-64">
+  <div [ngClass]="{'min-h-screen bg-gray-50 transition-all duration-300 md:ml-64': showLayout, 'w-full': !showLayout}" class="flex-1">
         <router-outlet></router-outlet>
       </div>
         </div>
