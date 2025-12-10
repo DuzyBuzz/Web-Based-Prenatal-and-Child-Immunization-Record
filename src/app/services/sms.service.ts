@@ -11,22 +11,26 @@ export class SmsService {
 
   constructor(private http: HttpClient) {}
 
-  sendSms(phone_number: string, message: string): Observable<any> {
-    const params = new HttpParams()
-      .set('api_token', this.apiToken)
-      .set('message', message)
-      .set('phone_number', phone_number);
+sendSms(phone_number: string, message: string): Observable<any> 
+{
+  const params = new HttpParams()
+    .set('api_token', this.apiToken)
+    .set('message', message)
+    .set('phone_number', phone_number)
+    .set('sender_name', 'kaprets'); 
 
-    return this.http.post(this.apiUrl, null, { params });
-  }
+  return this.http.post(this.apiUrl, null, { params });
+}
 
-  scheduleSmsReminder(phone_number: string, message: string, scheduled_at: string): Observable<any> {
-    const params = new HttpParams()
-      .set('api_token', this.apiToken)
-      .set('message', message)
-      .set('phone_number', phone_number)
-      .set('scheduled_at', scheduled_at); // Format: YYYY-MM-DD HH:mmA (e.g., 2025-03-08 05:00AM)
+scheduleSmsReminder(phone_number: string, message: string, scheduled_at: string): Observable<any> {
+  const params = new HttpParams()
+    .set('api_token', this.apiToken)
+    .set('message', message)
+    .set('phone_number', phone_number)
+    .set('scheduled_at', scheduled_at)
+    .set('sender_name', 'kaprets'); 
+  return this.http.post(this.reminderUrl, null, { params });
+}
 
-    return this.http.post(this.reminderUrl, null, { params });
-  }
+
 }

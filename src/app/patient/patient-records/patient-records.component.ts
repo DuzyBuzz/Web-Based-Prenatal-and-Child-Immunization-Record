@@ -11,8 +11,22 @@ import { Router, RouterLink } from '@angular/router';
   <div class="p-4 max-w-3xl mx-auto">
     <h2 class="text-2xl font-semibold mb-4">My Records</h2>
     <div class="flex gap-2 mb-4">
-      <a [routerLink]="['/patient','patient-info']" [queryParams]="{ type: 'itr', bare: true }" class="px-3 py-2 bg-emerald-500 text-white rounded">New Prenatal / ITR</a>
-      <a [routerLink]="['/patient','patient-info']" [queryParams]="{ type: 'immunization', bare: true }" class="px-3 py-2 bg-sky-500 text-white rounded">New Immunization</a>
+<a
+  [routerLink]="['/patient','patient-info']"
+  [queryParams]="{ type: 'itr', bare: true }"
+  class="px-3 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded transition"
+>
+  New Prenatal / ITR
+</a>
+
+<a
+  [routerLink]="['/patient','patient-info']"
+  [queryParams]="{ type: 'immunization', bare: true }"
+  class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition"
+>
+  New Immunization
+</a>
+
       <button (click)="refresh()" class="px-3 py-2 bg-gray-200 rounded">Refresh</button>
     </div>
 
