@@ -61,7 +61,6 @@
         formControlName="contactNumber"
         class="col-span-2 border-b border-gray-400 bg-transparent text-sm px-1 py-1 focus:outline-none"
         maxlength="11"
-        placeholder="e.g. 09926105119"
       />
     </div>
 
@@ -265,19 +264,4 @@
 
   </form>
 
-</div>
-
-<!-- Next appointment modal -->
-<div *ngIf="showNextAppointmentModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-  <div class="bg-white rounded-lg p-6 w-full max-w-md">
-    <h3 class="text-lg font-semibold mb-4">Set Next Prenatal Appointment</h3>
-    <p class="text-sm text-gray-600 mb-3">Please choose the patient's next visit date. This will be used to schedule the reminder SMS.</p>
-    <div class="mb-4">
-      <input type="date" [(ngModel)]="nextAppointmentDate" class="w-full border p-2 rounded" />
-    </div>
-    <div class="flex justify-end gap-3">
-      <button (click)="cancelNextAppointment()" class="px-4 py-2 bg-gray-200 rounded">Cancel</button>
-      <button (click)="confirmNextAppointment()" class="px-4 py-2 bg-blue-600 text-white rounded">Confirm & Save</button>
-    </div>
-  </div>
 </div>

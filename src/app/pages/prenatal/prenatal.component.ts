@@ -1,10 +1,12 @@
 import { Component, ElementRef, OnChanges, OnDestroy, OnInit, Renderer2, SimpleChanges } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Firestore, collection, addDoc, collectionData, deleteDoc, doc, docData  } from '@angular/fire/firestore';
+import { Firestore, collection, addDoc, collectionData, deleteDoc, doc, docData, updateDoc, getDoc  } from '@angular/fire/firestore';
 import { Auth } from '@angular/fire/auth';
 import { inject } from '@angular/core';
 import { forkJoin, Observable } from 'rxjs';
 import { Router } from '@angular/router';
+import { SmsService } from '../../services/sms.service';
+import { AuthService } from '../../auth/auth.service';
 import { map } from 'rxjs/operators';
 
 @Component({
@@ -43,6 +45,10 @@ export class PrenatalComponent implements OnInit, OnDestroy, OnChanges {
   emergencyForm: any;
   motherForm: any;
   showEmergency: boolean | undefined;
+  // Appointment modal state
+  showAppointmentModal = false;
+  selectedMotherForAppointment: any = null;
+  appointmentDate: string = '';
 
   toggleActionButtons(motherId: string) {
     this.selectedMotherId = this.selectedMotherId === motherId ? null : motherId;
@@ -56,7 +62,9 @@ export class PrenatalComponent implements OnInit, OnDestroy, OnChanges {
     private renderer: Renderer2,
     private el: ElementRef,
     private auth: Auth,
-    private router: Router
+    private router: Router,
+    private smsService: SmsService,
+    private authService: AuthService
 
   ) {}
   ngOnChanges(): void {
@@ -78,8 +86,9 @@ export class PrenatalComponent implements OnInit, OnDestroy, OnChanges {
     this.loadITRRecords();
     this.clickListener = this.renderer.listen('document', 'click', (event: MouseEvent) => this.onDocumentClick(event));
   }
-  loadITRRecords() {
-    throw new Error('Method not implemented.');
+  // Implement loadITRRecords to avoid runtime errors; delegate to fetchITRRecords
+  loadITRRecords(): void {
+    this.fetchITRRecords();
   }
 
   // Fetch all ITR records
@@ -330,6 +339,200 @@ export class PrenatalComponent implements OnInit, OnDestroy, OnChanges {
     console.log('Edit', mother);
     this.showContextMenu = false;
     // Implement edit logic here
+  }
+
+  // Open appointment modal for a mother
+  openAppointmentModal(mother: any): void {
+    this.selectedMotherForAppointment = mother;
+    this.appointmentDate = mother.nextPrenatal || this.getSecondTuesdayNextMonth();
+    this.showAppointmentModal = true;
+    this.selectedMotherId = null; // Close action buttons
+  }
+
+  // Close appointment modal
+  closeAppointmentModal(): void {
+    this.showAppointmentModal = false;
+    this.selectedMotherForAppointment = null;
+    this.appointmentDate = '';
+  }
+
+  // Save appointment date
+  async saveAppointment(): Promise<void> {
+    if (!this.appointmentDate || !this.selectedMotherForAppointment) {
+      alert('Please select a date.');
+      return;
+    }
+
+    try {
+      const docRef = doc(this.firestore, 'itr', this.selectedMotherForAppointment.id);
+      
+      // Get HCP name from current login
+      let attendantName = '';
+      let userId = '';
+      
+      // First check Firebase Auth user
+      const firebaseUser = this.auth.currentUser;
+      if (firebaseUser?.uid) {
+        userId = firebaseUser.uid;
+        // Try to get from userDetails first (already loaded)
+        if (this.userDetails?.name) {
+          attendantName = this.userDetails.name;
+          console.log('HCP name from userDetails (Firebase):', attendantName);
+        } else {
+          // If userDetails not available, fetch directly from users collection
+          try {
+            const userDocRef = doc(this.firestore, 'users', userId);
+            const userDocSnap = await getDoc(userDocRef);
+            if (userDocSnap.exists()) {
+              attendantName = userDocSnap.data()['name'] || '';
+              console.log('HCP name from users collection (Firebase):', attendantName);
+            }
+          } catch (err) {
+            console.error('Error fetching HCP name from users collection:', err);
+          }
+        }
+      } else {
+        // Check custom auth user (stored in localStorage)
+        const customAuthUser = this.authService.getAuthUser();
+        if (customAuthUser) {
+          attendantName = customAuthUser.name || '';
+          userId = customAuthUser.id || '';
+          console.log('HCP name from custom auth user:', attendantName);
+        }
+      }
+      
+      if (!attendantName) {
+        console.warn('Warning: Could not fetch HCP name');
+        alert('Error: Could not retrieve HCP information. Please refresh and try again.');
+        return;
+      }
+      
+      console.log('Saving appointment with nurseName:', attendantName, 'userId:', userId, 'for mother:', this.selectedMotherForAppointment.id);
+      
+      const updateData: any = { 
+        nextPrenatal: this.appointmentDate, 
+        nurseName: attendantName,
+        updatedAt: new Date()
+      };
+      
+      // Add HCP's user ID
+      if (userId) {
+        updateData.hcpUid = userId;
+      }
+      
+      await updateDoc(docRef, updateData);
+      console.log('✅ Successfully saved appointment to Firestore with nurseName:', attendantName);
+      
+      // Update local copy immediately
+      if (this.selectedMotherForAppointment) {
+        this.selectedMotherForAppointment.nextPrenatal = this.appointmentDate;
+        this.selectedMotherForAppointment.nurseName = attendantName;
+        if (userId) {
+          this.selectedMotherForAppointment.hcpUid = userId;
+        }
+      }
+      
+      // Send SMS with attendant name
+      try {
+        const rawContact = this.selectedMotherForAppointment?.contact || this.selectedMotherForAppointment?.contactNumber || this.selectedMotherForAppointment?.phone || this.selectedMotherForAppointment?.motherContact || this.selectedMotherForAppointment?.motherPhone;
+        console.log('📱 Raw contact value:', rawContact);
+        const contact = this.formatPHNumber(rawContact);
+        console.log('📱 Formatted contact:', contact);
+        
+        const motherFullName = `${this.selectedMotherForAppointment?.firstName || ''} ${this.selectedMotherForAppointment?.middleName || ''} ${this.selectedMotherForAppointment?.lastName || ''}`.trim();
+        const nextDate = this.appointmentDate;
+        const immediateMessage = `Good day ${motherFullName}, Your next prenatal appointment is scheduled on ${nextDate}. Expect a reminder on the day of your appointment.` + (attendantName ? `\nAttendant: ${attendantName}` : '');
+
+        if (!contact) {
+          console.warn('⚠️ WARNING: No valid phone number found for SMS');
+          return;
+        }
+
+        console.log('📤 Sending immediate SMS to:', contact, 'Message:', immediateMessage);
+        this.smsService.sendSms(contact, immediateMessage).subscribe({
+          next: (res: any) => console.log('✅ Immediate SMS sent successfully:', res),
+          error: (err: any) => {
+            console.error('❌ Immediate SMS failed:', err);
+            console.error('Error details:', err.message, err.status, err.error);
+          }
+        });
+
+        const scheduledAt = this.formatDateAt3AM(nextDate);
+        const scheduledMessage = `Reminder: Your prenatal appointment is today (${nextDate}). Please visit the health center.` + (attendantName ? `\nAttendant: ${attendantName}` : '');
+        if (scheduledAt) {
+          console.log('📤 Scheduling reminder SMS for:', scheduledAt, 'To:', contact);
+          this.smsService.scheduleSmsReminder(contact, scheduledMessage, scheduledAt).subscribe({
+            next: (res: any) => console.log('✅ Scheduled SMS set successfully:', res),
+            error: (err: any) => {
+              console.error('❌ Scheduled SMS failed:', err);
+              console.error('Error details:', err.message, err.status, err.error);
+            }
+          });
+        } else {
+          console.warn('⚠️ Could not format scheduled date for reminder SMS');
+        }
+      } catch (smsErr) {
+        console.error('❌ SMS error:', smsErr);
+      }
+
+      this.notificationMessage = 'Appointment date updated successfully!';
+      this.notificationType = 'success';
+      this.closeAppointmentModal();
+      
+    } catch (error) {
+      console.error('Error updating appointment:', error);
+      this.notificationMessage = 'Failed to update appointment. Please try again.';
+      this.notificationType = 'error';
+    }
+
+    setTimeout(() => {
+      this.notificationMessage = '';
+    }, 4000);
+  }
+
+  // Helper to get next second Tuesday
+  private getSecondTuesdayNextMonth(): string {
+    const now = new Date();
+    const year = now.getMonth() === 11 ? now.getFullYear() + 1 : now.getFullYear();
+    const month = (now.getMonth() + 1) % 12;
+    let count = 0;
+    for (let day = 1; day <= 15; day++) {
+      const date = new Date(year, month, day);
+      if (date.getDay() === 2) {
+        count++;
+        if (count === 2) {
+          return date.toISOString().split('T')[0]; // Return YYYY-MM-DD format
+        }
+      }
+    }
+    return '';
+  }
+
+  // Format a YYYY-MM-DD date string to API scheduled format at 03:00 AM (e.g. "YYYY-MM-DD 03:00AM")
+  private formatDateAt3AM(dateStr: string): string | null {
+    if (!dateStr) return null;
+    const d = new Date(dateStr + 'T03:00:00');
+    if (isNaN(d.getTime())) return null;
+    const y = d.getFullYear();
+    const m = (d.getMonth() + 1).toString().padStart(2, '0');
+    const day = d.getDate().toString().padStart(2, '0');
+    let h = d.getHours();
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12;
+    if (h === 0) h = 12;
+    const hh = h.toString().padStart(2, '0');
+    return `${y}-${m}-${day} ${hh}:00${ampm}`;
+  }
+
+  // Normalize Philippine mobile numbers to 11-digit format starting with 09
+  private formatPHNumber(raw: any): string {
+    if (!raw) return '';
+    const str = String(raw).trim();
+    const digits = str.replace(/\D/g, '');
+    // If starts with 9 and 10 digits, add leading 0
+    if (digits.length === 10 && digits.startsWith('9')) return '0' + digits;
+    if (digits.length === 11 && digits.startsWith('09')) return digits;
+    return '';
   }
 
   // Remove showPermissionError and closePermissionError logic

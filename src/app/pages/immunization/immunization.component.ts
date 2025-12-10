@@ -1,10 +1,12 @@
 import { Component, ElementRef, OnChanges, OnDestroy, OnInit, Renderer2, SimpleChanges } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Firestore, collection, addDoc, collectionData, deleteDoc, doc, docData  } from '@angular/fire/firestore';
+import { Firestore, collection, addDoc, collectionData, deleteDoc, doc, docData, updateDoc, getDoc  } from '@angular/fire/firestore';
 import { Auth } from '@angular/fire/auth';
+import { AuthService } from '../../auth/auth.service';
 import { inject } from '@angular/core';
 import { forkJoin, Observable } from 'rxjs';
 import { Router } from '@angular/router';
+import { SmsService } from '../../services/sms.service';
 @Component({
   selector: 'app-immunization',
   standalone: false,
@@ -37,6 +39,10 @@ export class ImmunizationComponent {
   currentUserUid: string | null = null;
   navigating= false;
   spinnerMessage = '';
+  // Appointment modal state
+  showAppointmentModal = false;
+  selectedChildForAppointment: any = null;
+  appointmentDate: string = '';
 
 
 
@@ -53,7 +59,9 @@ export class ImmunizationComponent {
     private renderer: Renderer2,
     private el: ElementRef,
     private auth: Auth,
-    private router: Router
+    private authService: AuthService,
+    private router: Router,
+    private smsService: SmsService
 
   ) {}
   ngOnChanges(): void {
@@ -278,6 +286,199 @@ export class ImmunizationComponent {
     // Implement edit logic here
   }
 
+  // Open appointment modal for a child
+  openAppointmentModal(child: any): void {
+    this.selectedChildForAppointment = child;
+    this.appointmentDate = child.SecondWednesdayNextMonth || this.getSecondWednesdayNextMonth();
+    this.showAppointmentModal = true;
+    this.selectedChildId = null; // Close action buttons
+  }
+
+  // Close appointment modal
+  closeAppointmentModal(): void {
+    this.showAppointmentModal = false;
+    this.selectedChildForAppointment = null;
+    this.appointmentDate = '';
+  }
+
+  // Save appointment date
+  async saveAppointment(): Promise<void> {
+    if (!this.appointmentDate || !this.selectedChildForAppointment) {
+      alert('Please select a date.');
+      return;
+    }
+
+    try {
+      const docRef = doc(this.firestore, 'immunization', this.selectedChildForAppointment.id);
+      
+      // Get HCP name from current login
+      let attendantName = '';
+      let userId = '';
+      
+      // First check Firebase Auth user
+      const firebaseUser = this.auth.currentUser;
+      if (firebaseUser?.uid) {
+        userId = firebaseUser.uid;
+        // Try to get from userDetails first (already loaded)
+        if (this.userDetails?.name) {
+          attendantName = this.userDetails.name;
+          console.log('HCP name from userDetails (Firebase):', attendantName);
+        } else {
+          // If userDetails not available, fetch directly from users collection
+          try {
+            const userDocRef = doc(this.firestore, 'users', userId);
+            const userDocSnap = await getDoc(userDocRef);
+            if (userDocSnap.exists()) {
+              attendantName = userDocSnap.data()['name'] || '';
+              console.log('HCP name from users collection (Firebase):', attendantName);
+            }
+          } catch (err) {
+            console.error('Error fetching HCP name from users collection:', err);
+          }
+        }
+      } else {
+        // Check custom auth user (stored in localStorage)
+        const customAuthUser = this.authService.getAuthUser();
+        if (customAuthUser) {
+          attendantName = customAuthUser.name || '';
+          userId = customAuthUser.id || '';
+          console.log('HCP name from custom auth user:', attendantName);
+        }
+      }
+      
+      if (!attendantName) {
+        console.warn('Warning: Could not fetch HCP name');
+        alert('Error: Could not retrieve HCP information. Please refresh and try again.');
+        return;
+      }
+      
+      console.log('Saving appointment with nurseName:', attendantName, 'userId:', userId, 'for child:', this.selectedChildForAppointment.id);
+      
+      const updateData: any = { 
+        SecondWednesdayNextMonth: this.appointmentDate, 
+        nurseName: attendantName,
+        updatedAt: new Date()
+      };
+      
+      // Add HCP's user ID
+      if (userId) {
+        updateData.hcpUid = userId;
+      }
+      
+      await updateDoc(docRef, updateData);
+      console.log('✅ Successfully saved appointment to Firestore with nurseName:', attendantName);
+      
+      // Update local copy immediately
+      if (this.selectedChildForAppointment) {
+        this.selectedChildForAppointment.SecondWednesdayNextMonth = this.appointmentDate;
+        this.selectedChildForAppointment.nurseName = attendantName;
+        if (userId) {
+          this.selectedChildForAppointment.hcpUid = userId;
+        }
+      }
+      
+      // Send SMS with attendant name (do not abort UI flow if no contact)
+      try {
+        const rawContact = this.selectedChildForAppointment?.contact || this.selectedChildForAppointment?.contactNumber || this.selectedChildForAppointment?.phone || this.selectedChildForAppointment?.motherContact || this.selectedChildForAppointment?.motherPhone;
+        console.log('📱 Raw contact value:', rawContact);
+        const contact = this.formatPHNumber(rawContact);
+        console.log('📱 Formatted contact:', contact);
+
+        const patientName = this.selectedChildForAppointment?.name || '';
+        const motherName = this.selectedChildForAppointment?.mother || '';
+        const nextDate = this.appointmentDate;
+        const immediateMessage = `Good day ${motherName || patientName}, Next Immunization for ${patientName} is on ${nextDate}. Expect reminder on the day of your appointment.` + (attendantName ? `\nAttendant: ${attendantName}` : '');
+
+        if (!contact) {
+          console.warn('⚠️ WARNING: No valid phone number found for SMS');
+        } else {
+          console.log('📤 Sending immediate SMS to:', contact, 'Message:', immediateMessage);
+          this.smsService.sendSms(contact, immediateMessage).subscribe({
+            next: (res: any) => console.log('✅ Immediate SMS sent successfully:', res),
+            error: (err: any) => {
+              console.error('❌ Immediate SMS failed:', err);
+              console.error('Error details:', err?.message, err?.status, err?.error);
+            }
+          });
+
+          const scheduledAt = this.formatDateAt3AM(nextDate);
+          const scheduledMessage = `Reminder: Immunization for ${patientName} is today (${nextDate}). Please visit the health center.` + (attendantName ? `\nAttendant: ${attendantName}` : '');
+          if (scheduledAt) {
+            console.log('📤 Scheduling reminder SMS for:', scheduledAt, 'To:', contact);
+            this.smsService.scheduleSmsReminder(contact, scheduledMessage, scheduledAt).subscribe({
+              next: (res: any) => console.log('✅ Scheduled SMS set successfully:', res),
+              error: (err: any) => {
+                console.error('❌ Scheduled SMS failed:', err);
+                console.error('Error details:', err?.message, err?.status, err?.error);
+              }
+            });
+          } else {
+            console.warn('⚠️ Could not format scheduled date for reminder SMS');
+          }
+        }
+      } catch (smsErr) {
+        console.error('❌ SMS error:', smsErr);
+      }
+
+      this.notificationMessage = 'Appointment date updated successfully!';
+      this.notificationType = 'success';
+      this.closeAppointmentModal();
+      
+    } catch (error) {
+      console.error('Error updating appointment:', error);
+      this.notificationMessage = 'Failed to update appointment. Please try again.';
+      this.notificationType = 'error';
+    }
+
+    setTimeout(() => {
+      this.notificationMessage = '';
+    }, 4000);
+  }
+
+  // Helper to get next second Wednesday
+  private getSecondWednesdayNextMonth(): string {
+    const now = new Date();
+    const year = now.getMonth() === 11 ? now.getFullYear() + 1 : now.getFullYear();
+    const month = (now.getMonth() + 1) % 12;
+    let count = 0;
+    for (let day = 1; day <= 15; day++) {
+      const date = new Date(year, month, day);
+      if (date.getDay() === 3) {
+        count++;
+        if (count === 2) {
+          return date.toISOString().split('T')[0]; // Return YYYY-MM-DD format
+        }
+      }
+    }
+    return '';
+  }
+
+  // Format a YYYY-MM-DD date string to API scheduled format at 03:00 AM (e.g. "YYYY-MM-DD 03:00AM")
+  private formatDateAt3AM(dateStr: string): string | null {
+    if (!dateStr) return null;
+    const d = new Date(dateStr + 'T03:00:00');
+    if (isNaN(d.getTime())) return null;
+    const y = d.getFullYear();
+    const m = (d.getMonth() + 1).toString().padStart(2, '0');
+    const day = d.getDate().toString().padStart(2, '0');
+    let h = d.getHours();
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12;
+    if (h === 0) h = 12;
+    const hh = h.toString().padStart(2, '0');
+    return `${y}-${m}-${day} ${hh}:00${ampm}`;
+  }
+
+  // Normalize Philippine mobile numbers to 11-digit format starting with 09
+  private formatPHNumber(raw: any): string {
+    if (!raw) return '';
+    const str = String(raw).trim();
+    const digits = str.replace(/\D/g, '');
+    // If starts with 9 and 10 digits, add leading 0
+    if (digits.length === 10 && digits.startsWith('9')) return '0' + digits;
+    if (digits.length === 11 && digits.startsWith('09')) return digits;
+    return '';
+  }
   // Removed permission error modal logic
 
 }

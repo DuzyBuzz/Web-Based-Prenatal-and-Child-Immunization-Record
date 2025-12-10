@@ -37,72 +37,150 @@ export class PatientAppointmentsComponentComponent implements OnInit {
 
   async ngOnInit() {
     this.authService.getCurrentUser().subscribe(async user => {
-      if (!user || !user.phoneNumber) {
-        this.calendarOptions.events = [];
-        return;
+      // Determine contact number: prefer authenticated user phone, fallback to localStorage patientPhone
+      let contactNumber: string | null = null;
+      if (user && user.phoneNumber) {
+        contactNumber = user.phoneNumber;
+        if (contactNumber.startsWith('+63')) {
+          contactNumber = '0' + contactNumber.slice(3);
+        }
+      } else {
+        const storedPhone = localStorage.getItem('patientPhone');
+        if (storedPhone) contactNumber = storedPhone;
       }
 
-      // Convert '+639...' to '09...'
-      let contactNumber = user.phoneNumber;
-      if (contactNumber.startsWith('+63')) {
-        contactNumber = '0' + contactNumber.slice(3);
+      if (!contactNumber) {
+        this.calendarOptions = { ...this.calendarOptions, events: [] };
+        return;
       }
 
       const db = getFirestore();
 
-      // Query immunization collection
-      const immunizationQuery = query(
-        collection(db, 'immunization'),
-        where('contact', '==', contactNumber)
-      );
+      // Query immunization collection and safely map dates
+      const immunizationQuery = query(collection(db, 'immunization'), where('contact', '==', contactNumber));
       const immunizationSnapshot = await getDocs(immunizationQuery);
-      const immunizationEvents = immunizationSnapshot.docs.map(doc => {
-        const data = doc.data();
-        const dateObj = new Date(data['SecondWednesdayNextMonth']);
-        const yyyy = dateObj.getFullYear();
-        const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
-        const dd = String(dateObj.getDate()).padStart(2, '0');
-        const formattedDate = `${yyyy}-${mm}-${dd}`;
-        return {
-          title: `${data['name']} - Immunization`,
-          date: formattedDate,
-          color: '#1E90FF',
-          type: 'Immunization',
-          name: data['name'],
-          contact: data['contact'],
-          raw: data
-        };
-      });
+      const immunizationEvents = immunizationSnapshot.docs
+        .map(doc => {
+          const data = doc.data();
+          const rawDate = data['SecondWednesdayNextMonth'];
+          if (!rawDate) return null;
+          const dateObj = new Date(rawDate);
+          if (isNaN(dateObj.getTime())) return null;
+          const yyyy = dateObj.getFullYear();
+          const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+          const dd = String(dateObj.getDate()).padStart(2, '0');
+          const formattedDate = `${yyyy}-${mm}-${dd}`;
+          return {
+            title: `${data['name'] || 'Patient'} - Immunization`,
+            date: formattedDate,
+            color: '#1E90FF',
+            type: 'Immunization',
+            name: data['name'],
+            contact: data['contact'],
+            raw: data
+          };
+        })
+        .filter(Boolean) as any[];
 
-      // Query itr collection
-      const itrQuery = query(
-        collection(db, 'itr'),
-        where('contact', '==', contactNumber)
-      );
+      // Query itr collection and safely map dates
+      const itrQuery = query(collection(db, 'itr'), where('contact', '==', contactNumber));
       const itrSnapshot = await getDocs(itrQuery);
-      const itrEvents = itrSnapshot.docs.map(doc => {
-        const data = doc.data();
-        const dateObj = new Date(data['nextPrenatal']);
-        const yyyy = dateObj.getFullYear();
-        const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
-        const dd = String(dateObj.getDate()).padStart(2, '0');
-        const formattedDate = `${yyyy}-${mm}-${dd}`;
-        const fullName = `${data['firstName']} ${data['middleName']} ${data['lastName']}`;
-        return {
-          title: `${fullName} - Prenatal Checkup`,
-          date: formattedDate,
-          color: '#34D399',
-          type: 'Prenatal',
-          name: fullName,
-          contact: data['contact'],
-          raw: data
-        };
-      });
+      const itrEvents = itrSnapshot.docs
+        .map(doc => {
+          const data = doc.data();
+          const rawDate = data['nextPrenatal'];
+          if (!rawDate) return null;
+          const dateObj = new Date(rawDate);
+          if (isNaN(dateObj.getTime())) return null;
+          const yyyy = dateObj.getFullYear();
+          const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+          const dd = String(dateObj.getDate()).padStart(2, '0');
+          const formattedDate = `${yyyy}-${mm}-${dd}`;
+          const fullName = `${data['firstName'] || ''} ${data['middleName'] || ''} ${data['lastName'] || ''}`.trim();
+          return {
+            title: `${fullName || 'Patient'} - Prenatal Checkup`,
+            date: formattedDate,
+            color: '#34D399',
+            type: 'Prenatal',
+            name: fullName || data['name'],
+            contact: data['contact'],
+            raw: data
+          };
+        })
+        .filter(Boolean) as any[];
 
       // Combine and set events
+      let allEvents: any[] = [...immunizationEvents, ...itrEvents];
+
+      // Also query by patientId if available (for lightweight patient session)
+      const patientId = localStorage.getItem('patientId');
+      if (patientId) {
+        try {
+          // Query immunization by patientId
+          const imByPatientQuery = query(collection(db, 'immunization'), where('patientId', '==', patientId));
+          const imByPatientSnap = await getDocs(imByPatientQuery);
+          const imByPatientEvents = imByPatientSnap.docs
+            .map(doc => {
+              const data = doc.data();
+              const rawDate = data['SecondWednesdayNextMonth'];
+              if (!rawDate) return null;
+              const dateObj = new Date(rawDate);
+              if (isNaN(dateObj.getTime())) return null;
+              const yyyy = dateObj.getFullYear();
+              const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+              const dd = String(dateObj.getDate()).padStart(2, '0');
+              const formattedDate = `${yyyy}-${mm}-${dd}`;
+              return {
+                title: `${data['name'] || 'Patient'} - Immunization (Record)`,
+                date: formattedDate,
+                color: '#1E90FF',
+                type: 'Immunization',
+                name: data['name'],
+                raw: data
+              };
+            })
+            .filter(Boolean) as any[];
+
+          // Query itr by patientId
+          const itrByPatientQuery = query(collection(db, 'itr'), where('patientId', '==', patientId));
+          const itrByPatientSnap = await getDocs(itrByPatientQuery);
+          const itrByPatientEvents = itrByPatientSnap.docs
+            .map(doc => {
+              const data = doc.data();
+              const rawDate = data['nextPrenatal'];
+              if (!rawDate) return null;
+              const dateObj = new Date(rawDate);
+              if (isNaN(dateObj.getTime())) return null;
+              const yyyy = dateObj.getFullYear();
+              const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+              const dd = String(dateObj.getDate()).padStart(2, '0');
+              const formattedDate = `${yyyy}-${mm}-${dd}`;
+              const fullName = `${data['firstName'] || ''} ${data['middleName'] || ''} ${data['lastName'] || ''}`.trim();
+              return {
+                title: `${fullName || 'Patient'} - Prenatal (Record)`,
+                date: formattedDate,
+                color: '#34D399',
+                type: 'Prenatal',
+                name: fullName || data['name'],
+                raw: data
+              };
+            })
+            .filter(Boolean) as any[];
+
+          // Merge and deduplicate events by date and title
+          allEvents = [...allEvents, ...imByPatientEvents, ...itrByPatientEvents];
+          const uniqueEvents = Array.from(
+            new Map(allEvents.map(e => [`${e.date}-${e.title}`, e])).values()
+          );
+          allEvents = uniqueEvents;
+        } catch (err) {
+          console.error('Error loading records by patientId', err);
+        }
+      }
+
       this.calendarOptions = {
         ...this.calendarOptions,
-        events: [...immunizationEvents, ...itrEvents]
+        events: allEvents
       };
     });
   }

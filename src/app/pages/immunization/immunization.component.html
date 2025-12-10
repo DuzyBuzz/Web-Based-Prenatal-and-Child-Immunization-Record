@@ -97,6 +97,20 @@
             </p>
             <p class="text-gray-600 text-sm">Attendant: <span class="font-medium">{{ child.nurseName || 'N/A' }}</span></p>
             <p class="text-gray-600 text-sm">Mother: <span class="font-medium">{{ child.mother || 'N/A' }}</span></p>
+            <p class="text-sm mt-1">
+              <ng-container *ngIf="child.SecondWednesdayNextMonth; else noSched">
+                <span class="inline-flex items-center bg-green-100 text-green-800 px-2 py-0.5 rounded-full text-xs font-semibold">
+                  <span class="w-2 h-2 bg-green-600 rounded-full mr-2"></span>
+                  {{ child.SecondWednesdayNextMonth | date:'MMMM d, y' }}
+                </span>
+              </ng-container>
+              <ng-template #noSched>
+                <span class="inline-flex items-center bg-red-100 text-red-800 px-2 py-0.5 rounded-full text-xs font-semibold">
+                  <span class="w-2 h-2 bg-red-600 rounded-full mr-2"></span>
+                  No schedule
+                </span>
+              </ng-template>
+            </p>
           </div>
 
           <!-- Actions -->
@@ -123,6 +137,14 @@
                 >
                   <span class="material-icons text-base">edit</span>
                   Edit
+                </button>
+                <button
+                  (click)="openAppointmentModal(child)"
+                  class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-blue-600 border border-blue-600 rounded-lg shadow-sm hover:bg-blue-700 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  title="Set Appointment"
+                >
+                  <span class="material-icons text-base">calendar_today</span>
+                  Set Appointment
                 </button>
                 <button
                   (click)="openDeleteModal(child)"
@@ -204,6 +226,21 @@
     {{ notificationMessage }}
   </div>
 
+  <!-- Appointment Modal -->
+  <div *ngIf="showAppointmentModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <div class="bg-white rounded-lg p-6 w-full max-w-md">
+      <h3 class="text-lg font-semibold mb-4">Set Appointment for {{ selectedChildForAppointment?.name }}</h3>
+      <p class="text-sm text-gray-600 mb-4">Choose the next immunization appointment date:</p>
+      <div class="mb-4">
+        <input type="date" [(ngModel)]="appointmentDate" class="w-full border border-gray-300 p-2 rounded" />
+      </div>
+      <div class="flex justify-end gap-3">
+        <button (click)="closeAppointmentModal()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300">Cancel</button>
+        <button (click)="saveAppointment()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Save Appointment</button>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <!-- Modal for PrenatalEditForm -->
@@ -224,4 +261,3 @@
     </button>
   </div>
 </div>
-

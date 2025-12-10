@@ -1,14 +1,29 @@
 <div class="max-w-7xl mx-auto p-6">
   <h2 class="text-3xl font-bold text-gray-800 mb-8 text-start tracking-tight">Reports</h2>
 
-  <div class="mb-8">
-    <div class="flex items-center bg-gray-100 border-l-4 border-gray-500 p-4 rounded-lg shadow-sm">
-      <svg class="w-6 h-6 text-gray-600 mr-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 20a8 8 0 100-16 8 8 0 000 16z"/>
-      </svg>
-      <span class="text-gray-700 text-base font-medium">
-        Only records for the currently logged-in user are displayed.
-      </span>
+  <!-- Filter controls -->
+  <div class="mb-6 grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+    <div>
+      <label class="text-sm font-medium text-gray-700">Date Field</label>
+      <select [(ngModel)]="dateField" class="w-full border p-2 rounded">
+        <option value="createdDate">Created Date</option>
+        <option value="createdAt">Created Timestamp</option>
+        <option value="nextPrenatal">Prenatal Schedule</option>
+        <option value="SecondWednesdayNextMonth">Immunization Schedule</option>
+        <option value="birthday">Birthday</option>
+      </select>
+    </div>
+    <div>
+      <label class="text-sm font-medium text-gray-700">Start Date</label>
+      <input type="date" [(ngModel)]="startDate" class="w-full border p-2 rounded" />
+    </div>
+    <div>
+      <label class="text-sm font-medium text-gray-700">End Date</label>
+      <input type="date" [(ngModel)]="endDate" class="w-full border p-2 rounded" />
+    </div>
+    <div class="flex gap-2">
+      <button class="px-4 py-2 bg-blue-600 text-white rounded" (click)="applyFilters()">Apply</button>
+      <button class="px-4 py-2 bg-gray-300 rounded" (click)="clearFilters()">Clear</button>
     </div>
   </div>
 
@@ -42,24 +57,16 @@
         <table class="min-w-full border-separate border-spacing-0">
           <thead class="bg-gray-100">
             <tr>
-              <th class="px-4 py-3 border-b text-left font-semibold">Name</th>
-              <th class="px-4 py-3 border-b text-left font-semibold">Prenatal Schedule</th>
-              <th class="px-4 py-3 border-b text-left font-semibold">Age</th>
-              <th class="px-4 py-3 border-b text-left font-semibold">Address</th>
-              <th class="px-4 py-3 border-b text-left font-semibold">Nurse</th>
+              <th *ngFor="let h of getItrHeaders()" class="px-4 py-3 border-b text-left font-semibold">{{ headerLabel(h) }}</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let item of itrData$ | async" class="hover:bg-gray-50 transition">
-              <td class="px-4 py-2 border-b">{{ item.firstName }} {{ item.middleName }} {{ item.lastName }}</td>
-              <td class="px-4 py-2 border-b">{{ item.nextPrenatal }}</td>
-              <td class="px-4 py-2 border-b">{{ item.age }}</td>
-              <td class="px-4 py-2 border-b">{{ item.address }}</td>
-              <td class="px-4 py-2 border-b">{{ item.nurseName }}</td>
+            <tr *ngFor="let item of itrFiltered" class="hover:bg-gray-50 transition">
+              <td *ngFor="let h of getItrHeaders()" class="px-4 py-2 border-b">{{ formatCell(item[h]) }}</td>
             </tr>
           </tbody>
         </table>
-        <ng-container *ngIf="((itrData$ | async)?.length ?? 0) === 0">
+        <ng-container *ngIf="itrFiltered.length === 0">
           <div class="text-center py-8 text-gray-400">No records found.</div>
         </ng-container>
       </ng-template>
@@ -77,26 +84,16 @@
         <table class="min-w-full border-separate border-spacing-0">
           <thead class="bg-gray-100">
             <tr>
-              <th class="px-4 py-3 border-b text-left font-semibold">Name</th>
-              <th class="px-4 py-3 border-b text-left font-semibold">Immunization Schedule</th>
-              <th class="px-4 py-3 border-b text-left font-semibold">Birthday</th>
-              <th class="px-4 py-3 border-b text-left font-semibold">Mother</th>
-              <th class="px-4 py-3 border-b text-left font-semibold">Address</th>
-              <th class="px-4 py-3 border-b text-left font-semibold">Nurse</th>
+              <th *ngFor="let h of getImmunizationHeaders()" class="px-4 py-3 border-b text-left font-semibold">{{ headerLabel(h) }}</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let item of immunizationData$ | async" class="hover:bg-gray-50 transition">
-              <td class="px-4 py-2 border-b">{{ item.name }}</td>
-              <td class="px-4 py-2 border-b">{{ item.SecondWednesdayNextMonth }}</td>
-              <td class="px-4 py-2 border-b">{{ item.birthday }}</td>
-              <td class="px-4 py-2 border-b">{{ item.mother }}</td>
-              <td class="px-4 py-2 border-b">{{ item.address }}</td>
-              <td class="px-4 py-2 border-b">{{ item.nurseName }}</td>
+            <tr *ngFor="let item of immunizationFiltered" class="hover:bg-gray-50 transition">
+              <td *ngFor="let h of getImmunizationHeaders()" class="px-4 py-2 border-b">{{ formatCell(item[h]) }}</td>
             </tr>
           </tbody>
         </table>
-        <ng-container *ngIf="((immunizationData$ | async)?.length ?? 0) === 0">
+        <ng-container *ngIf="immunizationFiltered.length === 0">
           <div class="text-center py-8 text-gray-400">No records found.</div>
         </ng-container>
       </ng-template>

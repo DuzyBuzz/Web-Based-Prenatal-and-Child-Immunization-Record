@@ -10,6 +10,6 @@ export const environment = {
     appId: '1:276896027954:web:6eb1844e5ad0778b3f332b',
   },
   smsApiKey: '46a41b56a940789fc2ef1178f6151a79d8639ec4',
-  smsApiUrl: 'https://sms.iprogtech.com/api/v1/sms_messages',
-  smsReminderUrl: 'https://sms.iprogtech.com/api/v1/sms_reminders',
+  smsApiUrl: 'https://www.iprogsms.com/api/v1/sms_messages',
+  smsReminderUrl: 'https://www.iprogsms.com/api/v1/message-reminders',
 };

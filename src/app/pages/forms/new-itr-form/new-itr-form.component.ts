@@ -4,7 +4,6 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators, For
 import { Firestore, addDoc, collection, serverTimestamp, doc, getDoc, updateDoc } from '@angular/fire/firestore';
 import { AuthService } from '../../../auth/auth.service';
 import { ActivatedRoute } from '@angular/router';
-import { SmsService } from '../../../services/sms.service';
 
 @Component({
   selector: 'app-new-itr-form',
@@ -39,7 +38,7 @@ nows: Date = new Date();
   private firestore = inject(Firestore);
   private authService = inject(AuthService);
   private route = inject(ActivatedRoute);
-  private smsService = inject(SmsService);
+  
   now: Date | undefined;
   // ✅ Define form
   form: FormGroup = this.fb.group({
@@ -69,10 +68,6 @@ nows: Date = new Date();
   prenatalid: string | null = null;
   buttonLabel = 'Save & Print';
   nurseName: string = '';
-  // Next appointment modal state
-  showNextAppointmentModal = false;
-  nextAppointmentDate: string = '';
-  private pendingSave = false;
 
   constructor() {
     // auto-calc age from birthday
@@ -92,9 +87,9 @@ async ngOnInit() {
     this.nows = new Date();
   }, 1000);
   // Get the currently logged-in HCP from AuthService
-  const authUser = this.authService.getAuthUser();
-  if (authUser && authUser.role === 'hcp') {
-    this.nurseName = authUser.name;
+  const nameFromAuth = await this.authService.getCurrentUserName();
+  if (nameFromAuth) {
+    this.nurseName = nameFromAuth;
     console.log('Nurse Name from AuthService:', this.nurseName);
   } else {
     console.warn('No authenticated HCP found.');
@@ -237,32 +232,7 @@ async ngOnInit() {
     return '';
   }
 
-  // Helper to get the 2nd Tuesday of next month at 3AM (YYYY-MM-DD HH:mmA)
-  private getSecondTuesdayNextMonthAt3AMString(): string {
-    const now = new Date();
-    const year = now.getMonth() === 11 ? now.getFullYear() + 1 : now.getFullYear();
-    const month = (now.getMonth() + 1) % 12;
-    let count = 0;
-    for (let day = 1; day <= 15; day++) {
-      const date = new Date(year, month, day);
-      if (date.getDay() === 2) {
-        count++;
-        if (count === 2) {
-          date.setHours(3, 0, 0, 0);
-          const y = date.getFullYear();
-          const m = (date.getMonth() + 1).toString().padStart(2, '0');
-          const d = date.getDate().toString().padStart(2, '0');
-          let h = date.getHours();
-          const ampm = h >= 12 ? 'PM' : 'AM';
-          h = h % 12;
-          if (h === 0) h = 12;
-          const hh = h.toString().padStart(2, '0');
-          return `${y}-${m}-${d} ${hh}:00${ampm}`;
-        }
-      }
-    }
-    return '';
-  }
+  // No SMS scheduling helper in the form component
 
   // Helper to format PH mobile number (returns valid 11-digit number or empty string)
   private formatPHNumber(raw: any): string {
@@ -311,46 +281,11 @@ async ngOnInit() {
     }
 
     try {
-      if (!this.nurseName || this.nurseName.trim() === '') {
-        alert('HCP name not found. Please complete your profile.');
-        return;
-      }
-
-      // Store form data for later use in performSave
-      this.form.getRawValue();
-
-      // Prefill suggested next appointment but let user change
-      this.nextAppointmentDate = this.getSecondTuesdayNextMonth();
-      this.pendingSave = true;
-      this.openNextAppointmentModal();
-      return;
-    } catch (error) {
-      console.error('Error preparing record:', error);
-      alert('Failed to prepare record. Please try again.');
-    }
-  }
-
-  // Open the date-picker modal to ask user for next appointment date
-  openNextAppointmentModal() {
-    this.showNextAppointmentModal = true;
-  }
-
-  // Cancel modal
-  cancelNextAppointment() {
-    this.showNextAppointmentModal = false;
-    this.pendingSave = false;
-  }
-
-  // User confirms chosen date; perform actual save and scheduling
-  async confirmNextAppointment() {
-    if (!this.nextAppointmentDate) {
-      alert('Please choose the next appointment date.');
-      return;
-    }
-    this.showNextAppointmentModal = false;
-    if (this.pendingSave) {
-      this.pendingSave = false;
+      // HCP (nurse) is optional now; proceed with save even if not set.
       await this.performSave();
+    } catch (error) {
+      console.error('Error saving record:', error);
+      alert('Failed to save. Please try again.');
     }
   }
 
@@ -360,7 +295,11 @@ async ngOnInit() {
       const firstName = (this.form.get('firstName')?.value ?? '').toString().trim();
       const lastName = (this.form.get('lastName')?.value ?? '').toString().trim();
       const contact = this.formatPHNumber(this.form.get('contactNumber')?.value);
-      const data = { ...this.form.getRawValue(), nurseName: this.nurseName, updatedAt: serverTimestamp() };
+      const data = { 
+        ...this.form.getRawValue(), 
+        nurseName: this.nurseName, 
+        updatedAt: serverTimestamp() 
+      };
 
       if (this.prenatalid) {
         const ref = doc(this.firestore, 'itr', this.prenatalid);
@@ -369,36 +308,6 @@ async ngOnInit() {
       } else {
         await addDoc(collection(this.firestore, 'itr'), { ...data, createdAt: serverTimestamp() });
         alert('Saved to Firestore!');
-      }
-
-      // --- SMS Logic ---
-      const name = firstName ? `${firstName} ${lastName}` : 'Patient';
-      let message = `Prenatal reminder: ${name}, next checkup on ${this.nextAppointmentDate}. Bring records.`;
-      if (message.length > 150) message = message.slice(0, 147) + '...';
-
-      if (contact) {
-        this.smsService.sendSms(contact, message).subscribe({
-          next: () => {
-            console.log('Immediate SMS sent.');
-          },
-          error: (err) => {
-            console.error('SMS Error:', err);
-          }
-        });
-
-        // Scheduled SMS using user-chosen date
-        const scheduledAt = this.getScheduledAtFromDateString(this.nextAppointmentDate);
-        let scheduledMessage = `Reminder: ${name}, prenatal checkup today at health center. Bring records.`;
-        if (scheduledMessage.length > 150) scheduledMessage = scheduledMessage.slice(0, 147) + '...';
-
-        if (scheduledAt) {
-          this.smsService.scheduleSmsReminder(contact, scheduledMessage, scheduledAt).subscribe({
-            next: (res: any) => console.log('Scheduled SMS set:', res),
-            error: (err: any) => console.error('Scheduled SMS failed:', err)
-          });
-        } else {
-          console.warn('Could not parse scheduled date for SMS scheduling; skipping scheduled SMS.');
-        }
       }
 
       window.print();
@@ -412,23 +321,5 @@ async ngOnInit() {
       console.error('Error saving record:', error);
       alert('Failed to save. Please try again.');
     }
-  }
-
-  // Convert a date string (human-readable or ISO) into API scheduled format YYYY-MM-DD HH:mmA
-  private getScheduledAtFromDateString(dateStr: string): string | null {
-    if (!dateStr) return null;
-    const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return null;
-    // set to 03:00 AM local time
-    d.setHours(3, 0, 0, 0);
-    const y = d.getFullYear();
-    const m = (d.getMonth() + 1).toString().padStart(2, '0');
-    const day = d.getDate().toString().padStart(2, '0');
-    let h = d.getHours();
-    const ampm = h >= 12 ? 'PM' : 'AM';
-    h = h % 12;
-    if (h === 0) h = 12;
-    const hh = h.toString().padStart(2, '0');
-    return `${y}-${m}-${day} ${hh}:00${ampm}`;
   }
 }

@@ -137,16 +137,17 @@ export class ItrRecordsComponent implements OnInit {
 
       // Compose SMS
       const name = this.itr.firstName ? `${this.itr.firstName} ${this.itr.lastName}` : 'Patient';
-      const contact = this.itr.contact;
+      const rawContact = this.itr.contact || this.itr.contactNumber || this.itr.phone || this.itr.motherContact;
+      const contact = this.formatPHNumber(rawContact);
       const nextPrenatal = this.getSecondTuesdayNextMonth();
-      const message =
+      let message =
         `Good day, ${name}! ` +
         `Your next prenatal check-up is scheduled on ${nextPrenatal}. ` +
         `You will also receive a reminder on the day of your appointment. Thank you for prioritizing your health and your baby's well-being.`;
+      if (message.length > 150) message = message.slice(0, 147) + '...';
 
       // Send SMS if contact is provided
       if (contact) {
-        /*
         this.smsService.sendSms(contact, message).subscribe({
           next: () => {
             this.successMessage = 'Record saved and SMS notification sent successfully.';
@@ -159,11 +160,18 @@ export class ItrRecordsComponent implements OnInit {
             window.print(); // Still print even if SMS fails
           }
         });
-        */
-        this.successMessage = 'Record saved successfully. SMS notification sending is currently disabled.';
-        window.print(); // Print the form after successful save
+
+        // schedule reminder
+        const scheduledAt = this.getSecondTuesdayNextMonthAt3AM();
+        const scheduledMessage = `Reminder: ${name}, your prenatal checkup is today. Please visit the health center. Bring your records.`;
+        if (scheduledAt) {
+          this.smsService.scheduleSmsReminder(contact, scheduledMessage, scheduledAt).subscribe({
+            next: (res: any) => console.log('Scheduled SMS reminder set:', res),
+            error: (err: any) => console.error('Scheduled SMS reminder failed:', err)
+          });
+        }
       } else {
-        this.successMessage = 'Record saved successfully. No contact number provided for SMS notification.';
+        this.successMessage = 'Record saved successfully. No valid contact number provided for SMS notification.';
         window.print(); // Print the form after successful save
       }
 
@@ -229,5 +237,72 @@ export class ItrRecordsComponent implements OnInit {
     const itrDocRef = doc(this.firestore, 'itr', this.itrDocId);
     await updateDoc(itrDocRef, itr);
     this.successMessage = 'Record updated successfully.';
+    // Send SMS notification on update as well
+    try {
+      const name = itr.firstName ? `${itr.firstName} ${itr.lastName}` : 'Patient';
+      const rawContact = itr.contact || itr.contactNumber || itr.phone || itr.motherContact;
+      const contact = this.formatPHNumber(rawContact);
+      const nextPrenatal = this.getSecondTuesdayNextMonth();
+      let message =
+        `Good day, ${name}! ` +
+        `Your next prenatal check-up is scheduled on ${nextPrenatal}. ` +
+        `You will also receive a reminder on the day of your appointment. Thank you for prioritizing your health and your baby's well-being.`;
+      if (message.length > 150) message = message.slice(0, 147) + '...';
+
+      if (contact) {
+        this.smsService.sendSms(contact, message).subscribe({
+          next: () => console.log('Update: SMS notification sent successfully.'),
+          error: (err) => console.error('Update: SMS Error:', err)
+        });
+
+        const scheduledAt = this.getSecondTuesdayNextMonthAt3AM();
+        const scheduledMessage = `Reminder: ${name}, your prenatal checkup is today. Please visit the health center. Bring your records.`;
+        if (scheduledAt) {
+          this.smsService.scheduleSmsReminder(contact, scheduledMessage, scheduledAt).subscribe({
+            next: (res: any) => console.log('Update: Scheduled SMS reminder set:', res),
+            error: (err: any) => console.error('Update: Scheduled SMS reminder failed:', err)
+          });
+        }
+      } else {
+        console.warn('Update: No valid contact to send SMS to.');
+      }
+    } catch (err) {
+      console.error('Update: SMS error', err);
+    }
+  }
+
+  // Helper to get 2nd Tuesday next month at 3AM (for scheduled reminders)
+  private getSecondTuesdayNextMonthAt3AM(): string {
+    const now = new Date();
+    const year = now.getMonth() === 11 ? now.getFullYear() + 1 : now.getFullYear();
+    const month = (now.getMonth() + 1) % 12;
+    let count = 0;
+    for (let day = 1; day <= 15; day++) {
+      const date = new Date(year, month, day);
+      if (date.getDay() === 2) { // 2 = Tuesday
+        count++;
+        if (count === 2) {
+          date.setHours(3, 0, 0, 0);
+          const y = date.getFullYear();
+          const m = (date.getMonth() + 1).toString().padStart(2, '0');
+          const d = date.getDate().toString().padStart(2, '0');
+          let h = date.getHours();
+          const ampm = h >= 12 ? 'PM' : 'AM';
+          h = h % 12;
+          if (h === 0) h = 12;
+          const hh = h.toString().padStart(2, '0');
+          return `${y}-${m}-${d} ${hh}:00${ampm}`;
+        }
+      }
+    }
+    return '';
+  }
+
+  // Simple PH phone formatter
+  private formatPHNumber(raw: any): string {
+    const str = (raw ?? '').toString().trim();
+    const digits = str.replace(/\D/g, '');
+    if (digits.length === 11 && digits.startsWith('09')) return digits;
+    return '';
   }
 }

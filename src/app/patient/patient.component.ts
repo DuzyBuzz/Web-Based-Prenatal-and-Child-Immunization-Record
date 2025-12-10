@@ -15,9 +15,13 @@ import { RouterOutlet } from '@angular/router';
 import { collection, getFirestore, query, where, getDocs } from 'firebase/firestore';
 
 export interface Appointment {
-  name: string;
-  appointmentName: string;
-  contactNumber: string;
+  name?: string;
+  appointmentName?: string;
+  contactNumber?: string;
+  // common date fields that may appear on appointment documents
+  date?: string;
+  scheduledAt?: string;
+  appointmentDate?: string;
   // add other fields if needed
 }
 
@@ -29,11 +33,12 @@ export interface Appointment {
 })
 export class PatientComponent implements OnInit {
   mobileMenuOpen = false;
-  showChat = false; // <-- Add this line
-  user$: Observable<User | null>; // Observable for user state
+  showChat = false;
+  user$: Observable<User | null>;
   appointments: Appointment[] = [];
   showDot = true;
   phoneNumber: string | null = null;
+  localStorage = localStorage; // expose localStorage to template
 
   constructor(private http: HttpClient, private authService: AuthService) {
     this.user$ = this.authService.getCurrentUser();
@@ -101,6 +106,20 @@ export class PatientComponent implements OnInit {
         this.appointments = [];
       }
     });
+    // Also try to load appointments for patient sessions stored in localStorage
+    const storedPhone = localStorage.getItem('patientPhone');
+    if (storedPhone) {
+      try {
+        const db = getFirestore();
+        const q = query(collection(db, 'appointment'), where('contactNumber', '==', storedPhone));
+        const querySnapshot = await getDocs(q);
+        this.appointments = querySnapshot.docs.map(doc => doc.data() as Appointment);
+        // if no auth user phoneNumber, show stored phone
+        if (!this.phoneNumber) this.phoneNumber = storedPhone;
+      } catch (err) {
+        console.error('load appointments for local patient error', err);
+      }
+    }
     this.authService.getCurrentUser().subscribe(user => {
       this.phoneNumber = user?.phoneNumber ?? null;
     });

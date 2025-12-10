@@ -123,19 +123,29 @@ export class ChildrenimmunizationformPrintOnlyComponent implements OnInit{
       // Compose SMS
       
       const name = this.formData.name || 'Parent/Guardian';
-      const contact = this.formData.contact;
+      const rawContact = this.formData.contact;
+      const contact = this.formatPHNumber(rawContact);
       const nextImmunization = this.getSecondWednesdayNextMonth();
       const message =
         `Good day ${this.formData.mother}, ` +
         `Next Immunization for ${this.formData.name} is on ${nextImmunization}. ` +
         `Expect reminder on the day of your appointment.`;
 
-      // Send SMS if contact is provided
+      // Send SMS if contact is valid after formatting
       if (contact) {
         this.smsService.sendSms(contact, message).subscribe({
           next: (res: any) => this.response = `Success: ${JSON.stringify(res)}`,
           error: (err: { error: any; }) => this.response = `Error: ${JSON.stringify(err.error)}`
         });
+
+        // Schedule reminder for second Wednesday next month at 3AM
+        const scheduledAt = this.getSecondWednesdayNextMonthAt3AM();
+        if (scheduledAt) {
+          this.smsService.scheduleSmsReminder(contact, message, scheduledAt).subscribe({
+            next: (res: any) => console.log('Scheduled reminder response', res),
+            error: (err: any) => console.warn('Failed to schedule reminder', err)
+          });
+        }
       }
       
 
@@ -195,8 +205,12 @@ vaccines = [
   }
 ];
   send() {
-    const phoneNumber = this.formData.contact;
+    const phoneNumber = this.formatPHNumber(this.formData.contact);
     const message = '';
+    if (!phoneNumber) {
+      this.response = 'Error: invalid phone number';
+      return;
+    }
     this.smsService.sendSms(phoneNumber, message).subscribe({
       next: (res: any) => this.response = `Success: ${JSON.stringify(res)}`,
       error: (err: { error: any; }) => this.response = `Error: ${JSON.stringify(err.error)}`
@@ -217,6 +231,43 @@ vaccines = [
         }
       }
     }
+    return '';
+  }
+
+  /**
+   * Return ISO string for 3:00 AM on the second Wednesday of next month.
+   * Returns empty string on failure.
+   */
+  private getSecondWednesdayNextMonthAt3AM(): string {
+    const now = new Date();
+    const year = now.getMonth() === 11 ? now.getFullYear() + 1 : now.getFullYear();
+    const month = (now.getMonth() + 1) % 12; // next month
+    let count = 0;
+    for (let day = 1; day <= 21; day++) {
+      const date = new Date(year, month, day, 3, 0, 0, 0);
+      if (date.getDay() === 3) { // 3 = Wednesday
+        count++;
+        if (count === 2) {
+          return date.toISOString();
+        }
+      }
+    }
+    return '';
+  }
+
+  /**
+   * Normalize Philippine phone numbers to 11-digit starting with '09'.
+   * Returns the formatted number or empty string if invalid.
+   */
+  private formatPHNumber(raw: any): string {
+    if (!raw) return '';
+    let s = String(raw).replace(/\s|\-|\(|\)/g, '');
+    // Remove leading +63 and replace with 0
+    if (s.startsWith('+63')) s = '0' + s.slice(3);
+    if (s.startsWith('63') && s.length === 11) s = '0' + s.slice(2);
+    // If starts with 9 and length 10, add leading 0
+    if (/^9\d{9}$/.test(s)) s = '0' + s;
+    if (/^0\d{10}$/.test(s)) return s;
     return '';
   }
 
